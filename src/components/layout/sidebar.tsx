@@ -26,9 +26,8 @@ export function Sidebar() {
 
   const visibleItems = navItems.filter((item) => !role || item.roles.includes(role));
 
-  const navContent = (
+  const renderNav = (collapsed: boolean, onLinkClick?: () => void) => (
     <>
-      {/* ── Nav Items ─────────────────────────────────────── */}
       <nav className="sidebar-scroll flex-1 space-y-0.5 overflow-y-auto px-2.5 py-4">
         {visibleItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
@@ -37,33 +36,21 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              onClick={() => sidebarMobileOpen && toggleMobileSidebar()}
+              onClick={onLinkClick}
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
-                sidebarCollapsed ? 'justify-center' : 'justify-start',
+                collapsed ? 'justify-center' : 'justify-start',
                 isActive
                   ? 'bg-primary font-semibold text-white shadow-sm'
                   : 'text-white/60 hover:bg-white/10 hover:text-white/90',
               )}
             >
               <Icon className={cn('h-[20px] w-[20px] shrink-0', isActive ? 'text-gold' : '')} />
-              {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
+              {!collapsed && <span className="truncate">{item.label}</span>}
             </Link>
           );
         })}
       </nav>
-
-      {/* ── Collapse button (desktop only) ────────────────── */}
-      <div className="hidden border-t border-sidebar-border lg:block">
-        <button
-          onClick={toggleSidebar}
-          className="flex w-full items-center justify-center py-3 text-white/40 hover:text-white/70 transition-colors"
-        >
-          <ChevronLeft
-            className={cn('h-4 w-4 transition-transform', sidebarCollapsed && 'rotate-180')}
-          />
-        </button>
-      </div>
     </>
   );
 
@@ -84,7 +71,15 @@ export function Sidebar() {
             className={cn('object-contain transition-all duration-200', sidebarCollapsed ? 'h-8 w-auto' : 'h-10 w-auto')}
           />
         </div>
-        {navContent}
+        {renderNav(sidebarCollapsed)}
+        <div className="hidden border-t border-sidebar-border lg:block">
+          <button
+            onClick={toggleSidebar}
+            className="flex w-full items-center justify-center py-3 text-white/40 hover:text-white/70 transition-colors"
+          >
+            <ChevronLeft className={cn('h-4 w-4 transition-transform', sidebarCollapsed && 'rotate-180')} />
+          </button>
+        </div>
       </aside>
 
       {/* ── Mobile overlay + drawer ────────────────────────── */}
@@ -102,14 +97,14 @@ export function Sidebar() {
           sidebarMobileOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
-        {/* Mobile header with close button */}
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-sidebar-border px-4">
           <img src="/avishkar-logo.svg" alt="Avishkar Dhol Tasha Pathak" className="h-10 w-auto object-contain" />
           <button onClick={toggleMobileSidebar} className="text-white/60 hover:text-white">
             <X className="h-5 w-5" />
           </button>
         </div>
-        {navContent}
+        {/* Mobile always shows labels (collapsed=false) */}
+        {renderNav(false, toggleMobileSidebar)}
       </aside>
     </>
   );
