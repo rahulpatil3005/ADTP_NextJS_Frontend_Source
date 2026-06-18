@@ -45,7 +45,7 @@ export function WeeklyAttendanceChart({ data }: { data: WeeklyTrendPoint[] }) {
             />
             <Legend wrapperStyle={{ fontSize: 12 }} />
             <Bar dataKey="Present" fill="#534AB7" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="Absent" fill="#E1F5EE" stroke="#9FE1CB" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="Absent" fill="#ef4444" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>
