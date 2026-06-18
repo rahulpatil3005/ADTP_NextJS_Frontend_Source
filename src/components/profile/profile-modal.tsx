@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { User, Lock, Eye, EyeOff, X, ShieldCheck } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient } from '@/lib/api/client';
 import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/primitives';
