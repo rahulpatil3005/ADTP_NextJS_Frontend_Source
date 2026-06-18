@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --sidebar-bg:      #1A0005;
+    --sidebar-border:  #3D0010;
+    --gold:            #F5C400;
+    --gold-dark:       #C49A00;
+  }
+
+  body {
+    @apply bg-background text-ink;
+  }
+
+  ::-webkit-scrollbar        { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb  { background: #D4C0C3; border-radius: 4px; }
+  ::-webkit-scrollbar-track  { background: transparent; }
+
+  /* Sidebar scrollbar — dark variant */
+  .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); }
+
+  :focus-visible {
+    outline: 2px solid #F5C400;
+    outline-offset: 2px;
+  }
+}
+
+/* ── Gold shimmer utility ─────────────────────────────────── */
+@layer utilities {
+  .text-gold-shimmer {
+    background: linear-gradient(90deg, #C49A00 0%, #F5C400 40%, #FFD740 60%, #C49A00 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gold-shimmer 2.5s linear infinite;
+  }
+}
+
+/* ── Performance ──────────────────────────────────────────── */
+@layer utilities {
+  /* Promote sidebar to its own compositor layer — no repaint on scroll */
+  aside {
+    will-change: transform;
+    transform: translateZ(0);
+  }
+
+  /* Smooth momentum scrolling on iOS + desktop */
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Image rendering — crisp QR codes */
+  img[alt*="QR"],
+  canvas {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
