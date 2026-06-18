@@ -1,8 +1,9 @@
 'use client';
 
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Menu } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
+import { useUiStore } from '@/store/ui-store';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuTrigger, DropdownMenuSeparator,
@@ -11,6 +12,7 @@ import {
 export function Topbar({ title }: { title: string }) {
   const router = useRouter();
   const { logout, role } = useAuthStore();
+  const { toggleMobileSidebar } = useUiStore();
 
   const handleLogout = () => {
     logout();
@@ -19,8 +21,14 @@ export function Topbar({ title }: { title: string }) {
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-surface px-6">
-      {/* Gold left accent bar + title */}
+      {/* Hamburger (mobile) + title */}
       <div className="flex items-center gap-3">
+        <button
+          onClick={toggleMobileSidebar}
+          className="flex items-center justify-center rounded-md p-1.5 text-ink hover:bg-background lg:hidden"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
         <span className="h-6 w-1 rounded-full bg-gold" />
         <h1 className="text-[17px] font-semibold text-ink">{title}</h1>
       </div>
