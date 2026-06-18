@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { LogOut, User, Menu } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
@@ -8,11 +9,13 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuTrigger, DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { ProfileModal } from '@/components/profile/profile-modal';
 
 export function Topbar({ title }: { title: string }) {
   const router = useRouter();
   const { logout, role } = useAuthStore();
   const { toggleMobileSidebar } = useUiStore();
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -20,6 +23,8 @@ export function Topbar({ title }: { title: string }) {
   };
 
   return (
+    <>
+    <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
     <header className="flex h-16 items-center justify-between border-b border-border bg-surface px-3 lg:px-6">
       {/* Hamburger (mobile) + title */}
       <div className="flex items-center gap-3">
@@ -42,7 +47,7 @@ export function Topbar({ title }: { title: string }) {
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setProfileOpen(true)}>
               <User className="mr-2 h-4 w-4" /> My Profile
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -53,5 +58,6 @@ export function Topbar({ title }: { title: string }) {
         </DropdownMenu>
       </div>
     </header>
+    </>
   );
 }
