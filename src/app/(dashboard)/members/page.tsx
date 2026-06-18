@@ -39,7 +39,7 @@ export default function MembersPage() {
     instrument: instrument || undefined,
     status: status || undefined,
     page,
-    limit: 15,
+    limit: 10,
   });
 
   const clearFilters = () => { setInstrument(''); setStatus(''); setPage(1); };

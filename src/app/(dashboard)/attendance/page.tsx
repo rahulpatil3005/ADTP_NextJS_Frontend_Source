@@ -11,6 +11,8 @@ import { formatDate } from '@/lib/utils';
 import { CreateSessionDialog } from '@/components/attendance/create-session-dialog';
 import { LiveSessionPanel } from '@/components/attendance/live-session-panel';
 
+const PAGE_SIZE = 10;
+
 export default function AttendancePage() {
   const { data: sessions, isLoading } = useSessions();
   const deleteSession = useDeleteSession();
@@ -20,6 +22,10 @@ export default function AttendancePage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; title: string } | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [page, setPage] = useState(1);
+
+  const totalPages = Math.ceil((sessions?.length ?? 0) / PAGE_SIZE);
+  const pagedSessions = sessions?.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleDelete = async () => {
     if (!confirmDelete) return;
@@ -66,7 +72,7 @@ export default function AttendancePage() {
         )}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {sessions?.map((session) => (
+          {pagedSessions?.map((session) => (
             <Card key={session.id} className="flex flex-col overflow-hidden">
               {/* Clickable body */}
               <div
@@ -114,6 +120,20 @@ export default function AttendancePage() {
             <Button variant="outline" className="mt-3" onClick={() => setDialogOpen(true)}>
               Create your first session
             </Button>
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="mt-5 flex items-center justify-between text-sm text-ink-secondary">
+            <span>Page {page} of {totalPages} · {sessions?.length} sessions</span>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                Previous
+              </Button>
+              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+                Next
+              </Button>
+            </div>
           </div>
         )}
       </div>
