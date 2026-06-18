@@ -20,7 +20,7 @@ export function Topbar({ title }: { title: string }) {
   };
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-surface px-6">
+    <header className="flex h-16 items-center justify-between border-b border-border bg-surface px-3 lg:px-6">
       {/* Hamburger (mobile) + title */}
       <div className="flex items-center gap-3">
         <button

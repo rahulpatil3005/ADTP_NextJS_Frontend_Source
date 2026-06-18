@@ -22,12 +22,12 @@ function SuperAdminDashboard() {
   return (
     <div>
       <Topbar title="Dashboard" />
-      <div className="p-6">
+      <div className="p-4 lg:p-6">
         {isLoading && <DashboardSkeleton />}
         {error && <p className="text-sm text-danger">Failed to load dashboard data.</p>}
         {data && (
           <>
-            <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
+            <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-5">
               <StatCard
                 label="Total Members"
                 value={data.members.total_members}
@@ -82,12 +82,12 @@ function AdminDashboard() {
   return (
     <div>
       <Topbar title="Dashboard" />
-      <div className="p-6">
+      <div className="p-4 lg:p-6">
         {isLoading && <DashboardSkeleton cols={3} />}
         {error && <p className="text-sm text-danger">Failed to load dashboard data.</p>}
         {data && (
           <>
-            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
               <StatCard
                 label="Active Members"
                 value={data.totalActiveMembers}
@@ -123,15 +123,15 @@ function AdminDashboard() {
               ) : (
                 <div className="divide-y divide-border">
                   {data.recentActivity.slice(0, 10).map((r: any) => (
-                    <div key={r.id} className="flex items-center justify-between py-2.5 text-sm">
+                    <div key={r.id} className="flex flex-col gap-1 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <span className="font-medium text-ink">{r.full_name}</span>
                         <span className="ml-2 text-xs text-ink-secondary">{r.member_code}</span>
                       </div>
-                      <div className="flex items-center gap-3 text-xs text-ink-secondary">
-                        <span>{r.session_title}</span>
+                      <div className="flex items-center gap-2 text-xs text-ink-secondary">
+                        <span className="truncate max-w-[140px]">{r.session_title}</span>
                         <span
-                          className={`rounded-full px-2 py-0.5 font-medium ${
+                          className={`shrink-0 rounded-full px-2 py-0.5 font-medium ${
                             r.status === 'present'
                               ? 'bg-success/10 text-success'
                               : 'bg-danger/10 text-danger'

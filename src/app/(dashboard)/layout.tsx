@@ -4,8 +4,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar />
-      {/* contain:layout+style isolates repaints to the main scroll area */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto min-w-0">
         {children}
       </main>
     </div>

@@ -20,6 +20,9 @@ export const useUiStore = create<UiState>()(
       toggleMobileSidebar: () => set((s) => ({ sidebarMobileOpen: !s.sidebarMobileOpen })),
       setLanguage: (language) => set({ language }),
     }),
-    { name: 'adtp-ui-prefs' },
+    {
+      name: 'adtp-ui-prefs',
+      partialize: (s) => ({ sidebarCollapsed: s.sidebarCollapsed, language: s.language }),
+    },
   ),
 );
