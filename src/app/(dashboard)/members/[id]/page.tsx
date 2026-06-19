@@ -78,12 +78,14 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
   const downloadCard = (qrDataUrl: string) => {
     if (!member) return;
 
-    // Card dimensions — CR80 card ratio (85.6 × 54mm) scaled up for print quality
+    // 2× scale for HD output — all drawing coords stay at 680×1020 logical pixels
     const W = 680, H = 1020;
-    const R = 32; // corner radius
+    const R = 32;
+    const SCALE = 2;
     const canvas = document.createElement('canvas');
-    canvas.width = W; canvas.height = H;
+    canvas.width = W * SCALE; canvas.height = H * SCALE;
     const ctx = canvas.getContext('2d')!;
+    ctx.scale(SCALE, SCALE);
 
     // ── Rounded card background ──────────────────────────────
     ctx.fillStyle = '#FFFFFF';
@@ -167,9 +169,9 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
     // ── QR code ───────────────────────────────────────────────
     const qrImg = new Image();
     qrImg.onload = () => {
-      const qrSize = 300;
+      const qrSize = 380;
       const qrX = (W - qrSize) / 2;
-      const qrY = divY + 28;
+      const qrY = divY + 24;
 
       // QR container box
       ctx.fillStyle = '#FAFAF7';
@@ -180,6 +182,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
       ctx.fill();
       ctx.stroke();
 
+      ctx.imageSmoothingEnabled = false;
       ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
       // ── Member ID pill ─────────────────────────────────────
@@ -379,12 +382,15 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
 
               <div className="my-4 h-px w-full bg-border" />
 
-              {/* QR image */}
-              <img
-                src={qrData.qrDataUrl}
-                alt={`QR for ${member.member_id}`}
-                className="h-48 w-48 border border-border"
-              />
+              {/* QR image — large crisp container for fast scanning */}
+              <div className="rounded-xl bg-[#FAFAF7] p-3 ring-1 ring-border">
+                <img
+                  src={qrData.qrDataUrl}
+                  alt={`QR for ${member.member_id}`}
+                  className="h-56 w-56 rounded-lg"
+                  style={{ imageRendering: 'crisp-edges' }}
+                />
+              </div>
 
               {/* Member ID */}
               <div className="mt-3 rounded-md bg-primary-accent px-4 py-1.5">

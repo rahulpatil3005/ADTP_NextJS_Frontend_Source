@@ -93,10 +93,13 @@ export default function NewMemberPage() {
   };
 
   const downloadQr = (memberId: string, fullName: string, instr: string, qrDataUrl: string) => {
+    // 2× scale for HD output — all drawing coords stay at 680×1020 logical pixels
     const W = 680, H = 1020, R = 32;
+    const SCALE = 2;
     const canvas = document.createElement('canvas');
-    canvas.width = W; canvas.height = H;
+    canvas.width = W * SCALE; canvas.height = H * SCALE;
     const ctx = canvas.getContext('2d')!;
+    ctx.scale(SCALE, SCALE);
 
     ctx.fillStyle = '#FFFFFF';
     ctx.beginPath(); ctx.roundRect(0, 0, W, H, R); ctx.fill();
@@ -138,11 +141,12 @@ export default function NewMemberPage() {
 
     const qrImg = new Image();
     qrImg.onload = () => {
-      const qrSize = 300, qrX = (W - qrSize) / 2, qrY = divY + 28;
+      const qrSize = 380, qrX = (W - qrSize) / 2, qrY = divY + 24;
 
       ctx.fillStyle = '#FAFAF7'; ctx.strokeStyle = '#E0DFD8'; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.roundRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40, 16);
       ctx.fill(); ctx.stroke();
+      ctx.imageSmoothingEnabled = false;
       ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
       const idY = qrY + qrSize + 36;
@@ -197,11 +201,14 @@ export default function NewMemberPage() {
             <h3 className="text-base font-semibold text-ink">{qrResult.full_name}</h3>
             <p className="mt-0.5 text-xs capitalize text-ink-secondary">{qrResult.instrument}</p>
             <div className="my-4 h-px w-full bg-border" />
-            <img
-              src={qrResult.qrDataUrl}
-              alt={`QR for ${qrResult.member_id}`}
-              className="h-44 w-44 rounded-lg"
-            />
+            <div className="rounded-xl bg-[#FAFAF7] p-3 ring-1 ring-border">
+              <img
+                src={qrResult.qrDataUrl}
+                alt={`QR for ${qrResult.member_id}`}
+                className="h-56 w-56 rounded-lg"
+                style={{ imageRendering: 'crisp-edges' }}
+              />
+            </div>
             <div className="mt-3 rounded-md bg-background px-4 py-1.5">
               <p className="font-mono text-xs font-bold tracking-widest text-ink">
                 {qrResult.member_id}

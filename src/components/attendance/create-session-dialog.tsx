@@ -5,10 +5,39 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input, Label } from '@/components/ui/primitives';
 import { createSessionSchema, type CreateSessionFormValues } from '@/lib/validators/schemas';
 import { useCreateSession } from '@/lib/hooks/use-attendance';
+
+const DEFAULT_LOCATION = 'Shiv Mandir, Umelman';
+const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+function todayTitle() {
+  const d = new Date();
+  const dd  = String(d.getDate()).padStart(2, '0');
+  const mon = MONTHS[d.getMonth()];
+  const day = DAYS[d.getDay()];
+  return `${dd} ${mon} ${d.getFullYear()} (${day})`;
+}
+
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function freshDefaults(): Partial<CreateSessionFormValues> {
+  return {
+    title: todayTitle(),
+    sessionDate: todayISO(),
+    locationName: DEFAULT_LOCATION,
+    sessionType: 'practice',
+    allowedRadiusMeters: 100,
+    isLocationRestricted: false,
+  };
+}
 
 export function CreateSessionDialog({
   open, onOpenChange,
@@ -18,18 +47,18 @@ export function CreateSessionDialog({
     register, handleSubmit, reset, formState: { errors },
   } = useForm<CreateSessionFormValues>({
     resolver: zodResolver(createSessionSchema),
-    defaultValues: {
-      sessionType: 'practice',
-      allowedRadiusMeters: 100,
-      isLocationRestricted: false,
-    },
+    defaultValues: freshDefaults(),
   });
+
+  // Re-populate defaults every time the dialog opens
+  useEffect(() => {
+    if (open) reset(freshDefaults() as CreateSessionFormValues);
+  }, [open, reset]);
 
   const onSubmit = async (values: CreateSessionFormValues) => {
     try {
       await createSession.mutateAsync(values);
       toast.success('Session created');
-      reset();
       onOpenChange(false);
     } catch {
       toast.error('Failed to create session');
