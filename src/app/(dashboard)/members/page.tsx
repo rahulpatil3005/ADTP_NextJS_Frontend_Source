@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Search, Plus, Filter, X } from 'lucide-react';
+import { Search, Plus, Filter, X, Download } from 'lucide-react';
 import { Topbar } from '@/components/layout/topbar';
 import { Input, Badge, Skeleton } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
 import { useMembers } from '@/lib/hooks/use-members';
 import { getInitials, instrumentLabel, statusBadgeColor, formatDate } from '@/lib/utils';
+import { useAuthStore } from '@/store/auth-store';
+import { apiClient } from '@/lib/api/client';
 
 const INSTRUMENT_OPTIONS = [
   { value: 'dhol',  label: 'ढोल (Dhol)' },
@@ -31,6 +33,25 @@ export default function MembersPage() {
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
   const [showFilter, setShowFilter] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const role = useAuthStore((s) => s.role);
+
+  const handleDownloadAllQr = async () => {
+    setDownloading(true);
+    try {
+      const res = await apiClient.get('/qr/download-all-zip', { responseType: 'blob' });
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/zip' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ADTP_QR_Cards_${new Date().toISOString().split('T')[0]}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert('Failed to download QR cards. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const activeFilterCount = [instrument, status].filter(Boolean).length;
 
@@ -74,6 +95,17 @@ export default function MembersPage() {
                 </span>
               )}
             </Button>
+            {role === 'super_admin' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadAllQr}
+                disabled={downloading}
+              >
+                <Download className="h-4 w-4" />
+                {downloading ? 'Preparing ZIP…' : 'Download All QR Cards'}
+              </Button>
+            )}
             <Button asChild size="sm">
               <Link href="/members/new">
                 <Plus className="h-4 w-4" /> Register Member
