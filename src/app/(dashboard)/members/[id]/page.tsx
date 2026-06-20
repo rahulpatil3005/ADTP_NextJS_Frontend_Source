@@ -351,8 +351,8 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
 
       {/* ── QR Modal ─────────────────────────────────────────── */}
       {qrData && member && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-border bg-surface shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-6">
+          <div className="my-auto w-full max-w-sm rounded-2xl border border-border bg-surface shadow-2xl">
             {/* Modal header stripe */}
             <div className="flex items-center justify-between rounded-t-2xl bg-primary px-5 py-4">
               <div className="flex items-center gap-3">
@@ -370,7 +370,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
             </div>
 
             {/* Modal body */}
-            <div className="flex flex-col items-center px-6 py-5 text-center">
+            <div className="flex flex-col items-center px-6 py-8 text-center">
               {/* Avatar */}
               <div className="mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-primary-accent text-lg font-bold text-primary">
                 {member.full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
@@ -380,7 +380,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                 {member.instrument}
               </span>
 
-              <div className="my-4 h-px w-full bg-border" />
+              <div className="my-5 h-px w-full bg-border" />
 
               {/* QR image — large crisp container for fast scanning */}
               <div className="rounded-xl bg-[#FAFAF7] p-3 ring-1 ring-border">
@@ -393,17 +393,17 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
               </div>
 
               {/* Member ID */}
-              <div className="mt-3 rounded-md bg-primary-accent px-4 py-1.5">
+              <div className="mt-4 rounded-md bg-primary-accent px-4 py-1.5">
                 <p className="font-mono text-xs font-bold tracking-widest text-primary">{member.member_id}</p>
               </div>
 
-              <p className="mt-2 text-[11px] text-ink-secondary">
+              <p className="mt-3 text-[11px] text-ink-secondary">
                 Scan this QR to mark attendance · Keep this card safe
               </p>
             </div>
 
             {/* Modal footer */}
-            <div className="flex gap-2 border-t border-border px-5 py-4">
+            <div className="flex gap-2 border-t border-border px-5 py-5">
               <Button className="flex-1" onClick={() => downloadCard(qrData.qrDataUrl)}>
                 <Download className="h-4 w-4" /> Download Card
               </Button>

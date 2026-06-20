@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -57,12 +57,15 @@ export default function NewMemberPage() {
   const fullName = watch('fullName');
   const hasPriorExp = watch('hasPriorPathakExp');
 
-  // Pre-fill digital signature whenever full name changes (only if user hasn't manually edited it)
+  // Track whether user has manually edited the signature field
+  const sigEditedRef = useRef(false);
+
+  // Keep signature in sync with full name unless user has manually changed it
   useEffect(() => {
-    if (fullName && !getValues('digitalSignature')) {
-      setValue('digitalSignature', fullName, { shouldValidate: false });
+    if (!sigEditedRef.current) {
+      setValue('digitalSignature', fullName ?? '', { shouldValidate: false });
     }
-  }, [fullName, setValue, getValues]);
+  }, [fullName, setValue]);
   const currentStatus = watch('currentStatus');
   const availability = watch('availability');
   const instrument = watch('instrument');
@@ -194,13 +197,13 @@ export default function NewMemberPage() {
             </div>
           </div>
 
-          <div className="flex flex-col items-center px-6 py-5">
+          <div className="flex flex-col items-center px-6 py-8">
             <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary-accent text-lg font-bold text-primary">
               {qrResult.full_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
             </div>
             <h3 className="text-base font-semibold text-ink">{qrResult.full_name}</h3>
             <p className="mt-0.5 text-xs capitalize text-ink-secondary">{qrResult.instrument}</p>
-            <div className="my-4 h-px w-full bg-border" />
+            <div className="my-5 h-px w-full bg-border" />
             <div className="rounded-xl bg-[#FAFAF7] p-3 ring-1 ring-border">
               <img
                 src={qrResult.qrDataUrl}
@@ -209,7 +212,7 @@ export default function NewMemberPage() {
                 style={{ imageRendering: 'crisp-edges' }}
               />
             </div>
-            <div className="mt-3 rounded-md bg-background px-4 py-1.5">
+            <div className="mt-4 rounded-md bg-background px-4 py-1.5">
               <p className="font-mono text-xs font-bold tracking-widest text-ink">
                 {qrResult.member_id}
               </p>
@@ -489,7 +492,9 @@ export default function NewMemberPage() {
           )}
           <Field label="Digital Signature" required error={errors.digitalSignature?.message} className="mt-4">
             <Input
-              {...register('digitalSignature')}
+              {...register('digitalSignature', {
+                onChange: () => { sigEditedRef.current = true; },
+              })}
               placeholder="Type your full name as signature"
             />
             <p className="mt-1 text-xs text-ink-secondary">

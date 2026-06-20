@@ -7,7 +7,7 @@ import { Card, Badge, Skeleton } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
 import { useSessions, useDeleteSession } from '@/lib/hooks/use-attendance';
 import { useAuthStore } from '@/store/auth-store';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatTime12 } from '@/lib/utils';
 import { CreateSessionDialog } from '@/components/attendance/create-session-dialog';
 import { LiveSessionPanel } from '@/components/attendance/live-session-panel';
 
@@ -86,7 +86,9 @@ export default function AttendancePage() {
                 <div className="space-y-1.5 text-xs text-ink-secondary">
                   <p className="flex items-center gap-1.5">
                     <Clock className="h-3.5 w-3.5" /> {formatDate(session.session_date)}
-                    {session.start_time && ` · ${session.start_time}`}
+                    {session.start_time && (
+                      <> · {formatTime12(session.start_time)}{session.end_time ? ` – ${formatTime12(session.end_time)}` : ''}</>
+                    )}
                   </p>
                   {session.location_name && (
                     <p className="flex items-center gap-1.5">

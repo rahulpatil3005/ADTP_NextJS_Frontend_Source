@@ -15,6 +15,17 @@ export function formatTime(date: string | Date) {
   return d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
+/** Convert a raw "HH:MM" or "HH:MM:SS" time string to "07:30 PM" */
+export function formatTime12(time: string | null | undefined): string {
+  if (!time) return '';
+  const [hStr, mStr] = time.split(':');
+  const h = parseInt(hStr, 10);
+  const m = parseInt(mStr ?? '0', 10);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
 export function getInitials(name: string) {
   const parts = name.trim().split(' ');
   if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
