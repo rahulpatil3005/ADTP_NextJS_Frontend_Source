@@ -11,6 +11,10 @@ out
 .env.production
 .env.development
 
+# Generated files
+next-env.d.ts
+*.tsbuildinfo
+
 # Misc
 .DS_Store
 *.log

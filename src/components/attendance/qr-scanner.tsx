@@ -30,7 +30,7 @@ export function QrScanner({ onScan, paused = false }: QrScannerProps) {
 
       await scanner.start(
         cam.id,
-        { fps: 15, qrbox: { width: 280, height: 280 }, aspectRatio: 1 },
+        { fps: 15, qrbox: { width: 320, height: 320 }, aspectRatio: 1 },
         (text) => {
           // Deduplicate: ignore if same QR fired again within same paused window
           if (paused || text === lastScannedRef.current) return;
@@ -64,7 +64,7 @@ export function QrScanner({ onScan, paused = false }: QrScannerProps) {
     <div className="flex flex-col items-center gap-4">
       {/* Camera viewfinder */}
       <div
-        className={`relative w-full max-w-xs overflow-hidden rounded-xl border-2 transition-colors ${
+        className={`relative w-full overflow-hidden rounded-xl border-2 transition-colors ${
           active ? 'border-primary bg-black' : 'border-border bg-background'
         }`}
         style={{ aspectRatio: '1' }}

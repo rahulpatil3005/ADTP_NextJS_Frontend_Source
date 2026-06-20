@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { ArrowLeft, Download, UserCheck, CheckCircle2, XCircle, AlertCircle, ClipboardList } from 'lucide-react';
+import { ArrowLeft, Download, UserCheck, CheckCircle2, XCircle, AlertCircle, ClipboardList, ScanFace, Camera, RefreshCw, Aperture, X } from 'lucide-react';
 import { Topbar } from '@/components/layout/topbar';
 import { Card, Badge, Skeleton } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
@@ -115,6 +115,7 @@ export function LiveSessionPanel({
   const [processing, setProcessing] = useState(false);
   const [popup, setPopup] = useState<ScanPopup | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
+  const [faceScanOpen, setFaceScanOpen] = useState(false);
   const role = useAuthStore((s) => s.role);
 
   // useRef so the lock is synchronous — React state updates are async
@@ -189,7 +190,7 @@ export function LiveSessionPanel({
           </div>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
 
           {/* ── QR Scanner panel ─────────────────────────────── */}
           <Card className="p-5">
@@ -254,8 +255,52 @@ export function LiveSessionPanel({
             )}
           </Card>
 
+          {/* ── Face Scan panel ──────────────────────────────── */}
+          <Card className="p-5">
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-semibold text-ink">Face Scan Attendance</h3>
+                <p className="text-xs text-ink-secondary mt-0.5">Capture member's face to auto-identify</p>
+              </div>
+              <Button
+                size="sm"
+                variant={faceScanOpen ? 'outline' : 'default'}
+                onClick={() => setFaceScanOpen(!faceScanOpen)}
+                className={!faceScanOpen ? 'bg-violet-600 hover:bg-violet-700 border-violet-600' : ''}
+              >
+                <ScanFace className="h-4 w-4" />
+                {faceScanOpen ? 'Close' : 'Open Face Scan'}
+              </Button>
+            </div>
+
+            {faceScanOpen ? (
+              <FaceScanPanel
+                sessionId={sessionId}
+                onResult={(result) => {
+                  setPopup(result.type === 'success'
+                    ? { type: 'success', memberName: result.memberName, status: result.status }
+                    : { type: 'error', message: result.message });
+                  if (result.type === 'success') {
+                    queryClient.invalidateQueries({ queryKey: ['session-records', sessionId] });
+                    queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+                  }
+                }}
+              />
+            ) : (
+              <div className="flex flex-col items-center gap-3 py-8 text-center">
+                <ScanFace className="h-10 w-10 text-violet-300" />
+                <p className="text-sm text-ink-secondary">
+                  Click <strong>Open Face Scan</strong> to use your webcam to identify members by face.
+                </p>
+                <p className="text-xs text-ink-secondary/70">
+                  Members need a face photo uploaded to their profile.
+                </p>
+              </div>
+            )}
+          </Card>
+
           {/* ── Live scan log ─────────────────────────────────── */}
-          <Card>
+          <Card className="md:col-span-2 xl:col-span-3">
             <div className="flex items-center justify-between border-b border-border p-4">
               <h3 className="text-sm font-medium text-ink">
                 Live Scan Log
@@ -315,6 +360,171 @@ export function LiveSessionPanel({
           </Card>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── Face Scan Panel ───────────────────────────────────────────
+type FaceScanResult = { type: 'success' | 'error'; memberName?: string; status?: string; message?: string; confidence?: number };
+
+function FaceScanPanel({ sessionId, onResult }: { sessionId: string; onResult: (r: FaceScanResult) => void }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [camReady, setCamReady] = useState(false);
+  const [camError, setCamError] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
+  const [lastResult, setLastResult] = useState<FaceScanResult | null>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+
+  const startCamera = useCallback(async (mode: 'user' | 'environment') => {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    setCamReady(false);
+    setCamError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: mode, width: { ideal: 1280 }, height: { ideal: 720 } },
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => setCamReady(true);
+      }
+    } catch {
+      setCamError('Camera not accessible. Check browser permissions.');
+    }
+  }, []);
+
+  useEffect(() => {
+    startCamera(facingMode);
+    return () => { streamRef.current?.getTracks().forEach((t) => t.stop()); };
+  }, [facingMode, startCamera]);
+
+  const handleCapture = async () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas || processing) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d')!.drawImage(video, 0, 0);
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      setProcessing(true);
+      setLastResult(null);
+      try {
+        const fd = new FormData();
+        fd.append('photo', blob, 'face.jpg');
+        fd.append('sessionId', sessionId);
+        const { data } = await apiClient.post('/attendance/face-scan', fd, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        const d = data.data;
+        const result: FaceScanResult = {
+          type: 'success',
+          memberName: d?.member?.fullName,
+          status: d?.status,
+          confidence: d?.confidence,
+        };
+        setLastResult(result);
+        onResult(result);
+      } catch (err: any) {
+        const msg = err?.response?.data?.message ?? 'Face not recognised';
+        const result: FaceScanResult = { type: 'error', message: msg };
+        setLastResult(result);
+        onResult(result);
+      } finally {
+        setProcessing(false);
+      }
+    }, 'image/jpeg', 0.92);
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* Video feed — responsive height */}
+      <div className="relative overflow-hidden rounded-xl bg-black" style={{ aspectRatio: '4/3' }}>
+        {camError ? (
+          <div className="absolute inset-0 flex items-center justify-center p-4 text-center text-sm text-white/60">
+            <div>
+              <Camera className="mx-auto mb-2 h-8 w-8 opacity-40" />
+              {camError}
+            </div>
+          </div>
+        ) : (
+          <>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="absolute inset-0 h-full w-full object-cover"
+              style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }}
+            />
+            {!camReady && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-sm text-white/60">
+                Starting camera…
+              </div>
+            )}
+            {/* Face oval guide */}
+            {camReady && (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <div
+                  className="border-2 border-dashed border-white/60"
+                  style={{ width: '38%', aspectRatio: '3/4', borderRadius: '50%' }}
+                />
+              </div>
+            )}
+            {/* Flip button overlay */}
+            {camReady && (
+              <button
+                type="button"
+                onClick={() => setFacingMode((m) => m === 'user' ? 'environment' : 'user')}
+                className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-black/50 px-2.5 py-1.5 text-xs text-white hover:bg-black/70"
+              >
+                <RefreshCw className="h-3 w-3" /> Flip
+              </button>
+            )}
+          </>
+        )}
+        <canvas ref={canvasRef} className="hidden" />
+      </div>
+
+      {/* Result */}
+      {lastResult && (
+        <div className={`flex items-start gap-3 rounded-xl p-4 text-sm ${
+          lastResult.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+        }`}>
+          {lastResult.type === 'success'
+            ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+            : <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+          }
+          <div>
+            {lastResult.memberName && <p className="font-semibold text-ink">{lastResult.memberName}</p>}
+            {lastResult.confidence !== undefined && (
+              <p className="text-xs text-ink-secondary">{lastResult.confidence}% confidence · {lastResult.status}</p>
+            )}
+            {lastResult.message && <p className="text-xs text-red-600">{lastResult.message}</p>}
+          </div>
+        </div>
+      )}
+
+      {/* Capture button */}
+      <button
+        type="button"
+        onClick={handleCapture}
+        disabled={!camReady || processing || !!camError}
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-40 transition-colors"
+      >
+        {processing
+          ? <span className="animate-pulse">Identifying…</span>
+          : <><Aperture className="h-4 w-4" /> Capture &amp; Identify</>
+        }
+      </button>
+
+      <p className="text-center text-xs text-ink-secondary/60">
+        Members must have a face photo uploaded to be identified.
+      </p>
     </div>
   );
 }

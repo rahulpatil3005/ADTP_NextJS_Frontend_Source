@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Download, Music2, CheckCircle2 } from 'lucide-react';
+import { Download, Music2, CheckCircle2, Camera, Upload, X, RefreshCw, Aperture } from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
 import { Topbar } from '@/components/layout/topbar';
 import { Button } from '@/components/ui/button';
 import { Input, Label, Textarea, Card } from '@/components/ui/primitives';
@@ -45,6 +46,21 @@ export default function NewMemberPage() {
   const router = useRouter();
   const createMember = useCreateMember();
   const [qrResult, setQrResult] = useState<QrResult | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [webcamOpen, setWebcamOpen] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoChange = useCallback((file: File | null) => {
+    setPhotoFile(file);
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPhotoPreview(url);
+    } else {
+      setPhotoPreview(null);
+    }
+  }, []);
 
   const {
     register, handleSubmit, watch, control, setValue, getValues,
@@ -81,6 +97,23 @@ export default function NewMemberPage() {
         Object.entries(rest).map(([k, v]) => [k, v === '' ? undefined : v]),
       );
       const result = await createMember.mutateAsync(payload as any);
+
+      // Upload photo in background if selected
+      if (photoFile && result.id) {
+        setUploadingPhoto(true);
+        try {
+          const fd = new FormData();
+          fd.append('photo', photoFile);
+          await apiClient.post(`/members/${result.id}/photo`, fd, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+        } catch {
+          toast.warning('Member registered but photo upload failed. You can re-upload from the member profile.');
+        } finally {
+          setUploadingPhoto(false);
+        }
+      }
+
       setQrResult({
         member_id: result.member_id,
         full_name: values.fullName,
@@ -240,6 +273,66 @@ export default function NewMemberPage() {
       <Topbar title="Register New Member" />
 
       <form onSubmit={handleSubmit(onSubmit)} className="mx-auto max-w-3xl space-y-5 p-6">
+
+        {/* ── 0. Member Photo ──────────────────────────────── */}
+        <Section title="Member Photo">
+          <p className="mb-4 text-sm text-ink-secondary">
+            Add a clear face photo — used for face-scan attendance (optional but recommended).
+          </p>
+          <div className="flex items-center gap-6">
+            {/* Preview */}
+            <div className="relative shrink-0">
+              {photoPreview ? (
+                <>
+                  <img
+                    src={photoPreview}
+                    alt="Member photo preview"
+                    className="h-24 w-24 rounded-full border-2 border-primary object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handlePhotoChange(null)}
+                    className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-danger text-white shadow"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </>
+              ) : (
+                <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-dashed border-border bg-background">
+                  <Camera className="h-8 w-8 text-ink-secondary/40" />
+                </div>
+              )}
+            </div>
+
+            {/* Upload controls */}
+            <div className="flex flex-col gap-2">
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handlePhotoChange(e.target.files?.[0] ?? null)}
+              />
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-ink hover:border-primary/40 hover:text-primary"
+              >
+                <Upload className="h-4 w-4" /> Upload from File
+              </button>
+              <button
+                type="button"
+                onClick={() => setWebcamOpen(true)}
+                className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary-accent px-4 py-2 text-sm font-medium text-primary hover:bg-primary-accent/70"
+              >
+                <Camera className="h-4 w-4" /> Open Camera
+              </button>
+              {uploadingPhoto && (
+                <p className="text-xs text-ink-secondary">Uploading photo…</p>
+              )}
+            </div>
+          </div>
+        </Section>
 
         {/* ── 1. Personal Information ─────────────────────── */}
         <Section title="Personal Information">
@@ -512,6 +605,136 @@ export default function NewMemberPage() {
           </Button>
         </div>
       </form>
+
+      {webcamOpen && (
+        <WebcamModal
+          onCapture={(file) => { handlePhotoChange(file); setWebcamOpen(false); }}
+          onClose={() => setWebcamOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Webcam capture modal ──────────────────────────────────────
+function WebcamModal({ onCapture, onClose }: {
+  onCapture: (file: File) => void;
+  onClose: () => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [ready, setReady] = useState(false);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const [error, setError] = useState<string | null>(null);
+
+  const startCamera = useCallback(async (mode: 'user' | 'environment') => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+    }
+    setReady(false);
+    setError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: mode, width: { ideal: 1280 }, height: { ideal: 720 } },
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => setReady(true);
+      }
+    } catch {
+      setError('Camera not available. Please allow camera access or use "Upload from File" instead.');
+    }
+  }, []);
+
+  useEffect(() => {
+    startCamera(facingMode);
+    return () => { streamRef.current?.getTracks().forEach((t) => t.stop()); };
+  }, [facingMode, startCamera]);
+
+  const handleCapture = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d')!.drawImage(video, 0, 0);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const file = new File([blob], `webcam-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      onCapture(file);
+    }, 'image/jpeg', 0.92);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-surface shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+          <div>
+            <p className="font-semibold text-ink">Take Photo</p>
+            <p className="text-xs text-ink-secondary">Position face in the frame and click Capture</p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-lg p-1.5 hover:bg-background">
+            <X className="h-5 w-5 text-ink-secondary" />
+          </button>
+        </div>
+
+        {/* Video */}
+        <div className="relative bg-black">
+          {error ? (
+            <div className="flex h-64 items-center justify-center p-6 text-center text-sm text-white/70">
+              {error}
+            </div>
+          ) : (
+            <>
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full"
+                style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }}
+              />
+              {!ready && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                  <p className="text-sm text-white/70">Starting camera…</p>
+                </div>
+              )}
+              {/* Face guide oval */}
+              {ready && (
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <div className="h-52 w-40 rounded-full border-2 border-dashed border-white/50" />
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Hidden canvas for capture */}
+        <canvas ref={canvasRef} className="hidden" />
+
+        {/* Actions */}
+        <div className="flex items-center justify-between px-5 py-4">
+          <button
+            type="button"
+            onClick={() => setFacingMode((m) => m === 'user' ? 'environment' : 'user')}
+            className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-ink hover:bg-background"
+            title="Flip camera"
+          >
+            <RefreshCw className="h-4 w-4" /> Flip
+          </button>
+          <button
+            type="button"
+            onClick={handleCapture}
+            disabled={!ready || !!error}
+            className="flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-40 hover:bg-primary/90"
+          >
+            <Aperture className="h-4 w-4" /> Capture
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
