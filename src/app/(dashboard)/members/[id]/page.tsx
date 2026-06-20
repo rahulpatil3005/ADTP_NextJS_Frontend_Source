@@ -2,7 +2,7 @@
 
 import { use, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Download, QrCode, Trash2, X, Music2, AlertTriangle, UserCog } from 'lucide-react';
+import { ArrowLeft, Download, QrCode, Trash2, X, Music2, AlertTriangle, UserCog, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { Topbar } from '@/components/layout/topbar';
 import { Button } from '@/components/ui/button';
@@ -46,6 +46,44 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
   const [selectedStatus, setSelectedStatus] = useState<MemberStatus>('active');
   const [statusReason, setStatusReason] = useState('');
   const [statusLoading, setStatusLoading] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState<Record<string, string>>({});
+  const [editLoading, setEditLoading] = useState(false);
+
+  const openEdit = () => {
+    if (!member) return;
+    setEditForm({
+      fullName:       member.full_name ?? '',
+      dateOfBirth:    member.date_of_birth ?? '',
+      gender:         member.gender ?? '',
+      mobileNumber:   member.mobile_number ?? '',
+      email:          member.email ?? '',
+      address:        member.address ?? '',
+      currentStatus:  member.current_status ?? '',
+      instrument:     member.instrument ?? '',
+      availability:   member.availability ?? '',
+      parentsName:    member.guardian_name ?? '',
+      parentsContact: member.guardian_contact ?? '',
+      joiningReason:  member.joining_reason ?? '',
+      healthDetails:  member.health_notes ?? '',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEdit = async () => {
+    setEditLoading(true);
+    try {
+      const payload: Record<string, string> = {};
+      Object.entries(editForm).forEach(([k, v]) => { if (v !== '') payload[k] = v; });
+      await updateMember.mutateAsync(payload as any);
+      toast.success('Member details updated.');
+      setShowEditModal(false);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? 'Failed to update member.');
+    } finally {
+      setEditLoading(false);
+    }
+  };
 
   const handleChangeStatus = async () => {
     setStatusLoading(true);
@@ -277,6 +315,11 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                 <Button size="sm" variant="outline" loading={qrLoading} onClick={handleViewQr}>
                   <QrCode className="h-4 w-4" /> View QR
                 </Button>
+                {(role === 'super_admin' || role === 'admin') && (
+                  <Button size="sm" variant="outline" onClick={openEdit}>
+                    <Pencil className="h-4 w-4" /> Edit Member
+                  </Button>
+                )}
                 {role === 'super_admin' && (
                   <Button size="sm" variant="outline" onClick={() => { setSelectedStatus(member.status as MemberStatus); setShowStatusModal(true); }}>
                     <UserCog className="h-4 w-4" /> Change Status
@@ -348,6 +391,151 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
           </div>
         )}
       </div>
+
+      {/* ── Edit Member Modal ────────────────────────────────── */}
+      {showEditModal && member && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4">
+          <div className="flex w-full flex-col rounded-t-2xl border border-border bg-surface shadow-2xl sm:max-w-2xl sm:rounded-xl" style={{ maxHeight: '90vh' }}>
+
+            {/* Header */}
+            <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
+              <div className="flex items-center gap-2">
+                <Pencil className="h-5 w-5 text-primary" />
+                <div>
+                  <h3 className="text-sm font-semibold text-ink sm:text-base">Edit Member</h3>
+                  <p className="text-xs text-ink-secondary">{member.full_name} · {member.member_id}</p>
+                </div>
+              </div>
+              <button onClick={() => setShowEditModal(false)} className="rounded-lg p-1 text-ink-secondary hover:bg-gray-100 hover:text-ink">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Scrollable form body */}
+            <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+
+              {/* Personal Information */}
+              <div>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-secondary">Personal Information</p>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink-secondary">Full Name</label>
+                    <input className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={editForm.fullName ?? ''} onChange={e => setEditForm(f => ({ ...f, fullName: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink-secondary">Date of Birth</label>
+                    <input type="date" className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={editForm.dateOfBirth ?? ''} onChange={e => setEditForm(f => ({ ...f, dateOfBirth: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink-secondary">Gender</label>
+                    <select className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={editForm.gender ?? ''} onChange={e => setEditForm(f => ({ ...f, gender: e.target.value }))}>
+                      <option value="">Select gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink-secondary">Mobile Number</label>
+                    <input className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={editForm.mobileNumber ?? ''} onChange={e => setEditForm(f => ({ ...f, mobileNumber: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink-secondary">Email</label>
+                    <input type="email" className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={editForm.email ?? ''} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink-secondary">Current Occupation</label>
+                    <select className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={editForm.currentStatus ?? ''} onChange={e => setEditForm(f => ({ ...f, currentStatus: e.target.value }))}>
+                      <option value="">Select status</option>
+                      <option value="school_student">School Student</option>
+                      <option value="college_student">College Student</option>
+                      <option value="working_professional">Working Professional</option>
+                      <option value="business">Business</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="mb-1 block text-xs font-medium text-ink-secondary">Address</label>
+                    <textarea rows={2} className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-none" value={editForm.address ?? ''} onChange={e => setEditForm(f => ({ ...f, address: e.target.value }))} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Pathak Information */}
+              <div>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-secondary">Pathak Information</p>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink-secondary">Instrument</label>
+                    <select className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={editForm.instrument ?? ''} onChange={e => setEditForm(f => ({ ...f, instrument: e.target.value }))}>
+                      <option value="">Select instrument</option>
+                      <option value="dhol">ढोल (Dhol)</option>
+                      <option value="tasha">ताशा (Tasha)</option>
+                      <option value="tool">टोल (Tool)</option>
+                      <option value="dhwaj">ध्वज (Dhwaj)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink-secondary">Availability</label>
+                    <select className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={editForm.availability ?? ''} onChange={e => setEditForm(f => ({ ...f, availability: e.target.value }))}>
+                      <option value="">Select availability</option>
+                      <option value="daily">Daily</option>
+                      <option value="two_days_week">2 Days in Week</option>
+                      <option value="three_days_week">3 Days in Week</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="mb-1 block text-xs font-medium text-ink-secondary">Joining Reason</label>
+                    <textarea rows={2} className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-none" value={editForm.joiningReason ?? ''} onChange={e => setEditForm(f => ({ ...f, joiningReason: e.target.value }))} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Guardian / Parent Information */}
+              <div>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-secondary">Guardian / Parent Information</p>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink-secondary">Parent / Guardian Name</label>
+                    <input className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={editForm.parentsName ?? ''} onChange={e => setEditForm(f => ({ ...f, parentsName: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink-secondary">Parent / Guardian Mobile</label>
+                    <input className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={editForm.parentsContact ?? ''} onChange={e => setEditForm(f => ({ ...f, parentsContact: e.target.value }))} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Health */}
+              <div>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-secondary">Health Information</p>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-ink-secondary">Health Details / Limitations</label>
+                  <textarea rows={2} className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-none" value={editForm.healthDetails ?? ''} onChange={e => setEditForm(f => ({ ...f, healthDetails: e.target.value }))} />
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex shrink-0 flex-col gap-2 border-t border-border px-5 py-4 sm:flex-row">
+              <button
+                onClick={handleEdit}
+                disabled={editLoading}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-50 sm:flex-1"
+              >
+                {editLoading ? 'Saving…' : 'Save Changes'}
+              </button>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="flex w-full items-center justify-center rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-ink hover:bg-background sm:flex-1"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── QR Modal ─────────────────────────────────────────── */}
       {qrData && member && (
