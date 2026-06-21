@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { ArrowLeft, Download, UserCheck, CheckCircle2, XCircle, AlertCircle, ClipboardList, ScanFace, Camera, RefreshCw, Aperture, X, LogOut, Search } from 'lucide-react';
+import { ArrowLeft, Download, UserCheck, CheckCircle2, XCircle, AlertCircle, ClipboardList, ScanFace, Camera, RefreshCw, Aperture, X, LogOut, Search, Filter } from 'lucide-react';
 import { Topbar } from '@/components/layout/topbar';
 import { Card, Badge, Skeleton } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
@@ -139,6 +139,9 @@ export function LiveSessionPanel({
 
   const [exporting, setExporting] = useState(false);
   const [registerSearch, setRegisterSearch] = useState('');
+  const [registerStatusFilter, setRegisterStatusFilter] = useState<'all' | 'checked_in' | 'absent' | 'checked_out'>('all');
+  const [registerInstrumentFilter, setRegisterInstrumentFilter] = useState('');
+  const [showRegisterFilter, setShowRegisterFilter] = useState(false);
   const role = useAuthStore((s) => s.role);
 
   const handleExport = async () => {
@@ -527,25 +530,109 @@ export function LiveSessionPanel({
                   {exporting ? 'Exporting…' : 'Export Excel'}
                 </button>
               </div>
-              <div className="border-t border-border px-3 py-2.5 sm:px-4">
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-secondary" />
-                  <input
-                    type="text"
-                    placeholder="Search by name or member ID…"
-                    value={registerSearch}
-                    onChange={(e) => setRegisterSearch(e.target.value)}
-                    className="w-full rounded-lg border border-border bg-background py-2 pl-9 pr-8 text-sm placeholder:text-ink-secondary/60 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
-                  />
-                  {registerSearch && (
-                    <button
-                      onClick={() => setRegisterSearch('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-ink-secondary hover:text-ink"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  )}
+              <div className="border-t border-border px-3 py-2.5 sm:px-4 space-y-2">
+                {/* Search + Filter toggle row */}
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-secondary" />
+                    <input
+                      type="text"
+                      placeholder="Search by name or member ID…"
+                      value={registerSearch}
+                      onChange={(e) => setRegisterSearch(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-background py-2 pl-9 pr-8 text-sm placeholder:text-ink-secondary/60 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                    />
+                    {registerSearch && (
+                      <button onClick={() => setRegisterSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-ink-secondary hover:text-ink">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setShowRegisterFilter((v) => !v)}
+                    className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+                      showRegisterFilter || registerStatusFilter !== 'all' || registerInstrumentFilter
+                        ? 'border-violet-400 bg-violet-50 text-violet-600'
+                        : 'border-border bg-background text-ink-secondary hover:border-violet-300 hover:text-ink'
+                    }`}
+                  >
+                    <Filter className="h-3.5 w-3.5" />
+                    Filter
+                    {(registerStatusFilter !== 'all' || registerInstrumentFilter) && (
+                      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-violet-600 text-[10px] font-bold text-white">
+                        {(registerStatusFilter !== 'all' ? 1 : 0) + (registerInstrumentFilter ? 1 : 0)}
+                      </span>
+                    )}
+                  </button>
                 </div>
+
+                {/* Expanded filter panel */}
+                {showRegisterFilter && (
+                  <div className="rounded-lg border border-border bg-background p-3 space-y-3">
+                    {/* Status filter */}
+                    <div>
+                      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-ink-secondary">Status</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          { value: 'all',         label: 'All' },
+                          { value: 'checked_in',  label: 'Checked In' },
+                          { value: 'absent',      label: 'Absent' },
+                          { value: 'checked_out', label: 'Checked Out' },
+                        ].map((opt) => (
+                          <button
+                            key={opt.value}
+                            onClick={() => setRegisterStatusFilter(opt.value as any)}
+                            className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
+                              registerStatusFilter === opt.value
+                                ? 'border-violet-400 bg-violet-50 text-violet-700'
+                                : 'border-border bg-surface text-ink-secondary hover:border-violet-300'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Instrument filter */}
+                    <div>
+                      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-ink-secondary">Instrument</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          { value: '',        label: 'All' },
+                          { value: 'dhol',    label: 'ढोल Dhol' },
+                          { value: 'tasha',   label: 'ताशा Tasha' },
+                          { value: 'tool',    label: 'टोल Tool' },
+                          { value: 'dhwaj',   label: 'ध्वज Dhwaj' },
+                          { value: 'zanj',    label: 'झांज Zanj' },
+                          { value: 'support', label: 'सहाय्यक Support' },
+                        ].map((opt) => (
+                          <button
+                            key={opt.value}
+                            onClick={() => setRegisterInstrumentFilter(opt.value)}
+                            className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
+                              registerInstrumentFilter === opt.value
+                                ? 'border-violet-400 bg-violet-50 text-violet-700'
+                                : 'border-border bg-surface text-ink-secondary hover:border-violet-300'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Clear */}
+                    {(registerStatusFilter !== 'all' || registerInstrumentFilter) && (
+                      <button
+                        onClick={() => { setRegisterStatusFilter('all'); setRegisterInstrumentFilter(''); }}
+                        className="text-xs text-danger hover:underline"
+                      >
+                        Clear filters
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -564,7 +651,21 @@ export function LiveSessionPanel({
               ))}
 
               {!isLoading && allMembers
-                .filter((m) => !registerSearch || m.full_name.toLowerCase().includes(registerSearch.toLowerCase()) || m.member_id?.toLowerCase().includes(registerSearch.toLowerCase()))
+                .filter((m) => {
+                  const record = recordByMemberId.get(m.id);
+                  const checkedIn  = !!record;
+                  const checkedOut = !!record?.check_out_time;
+
+                  if (registerSearch) {
+                    const q = registerSearch.toLowerCase();
+                    if (!m.full_name.toLowerCase().includes(q) && !m.member_id?.toLowerCase().includes(q)) return false;
+                  }
+                  if (registerInstrumentFilter && m.instrument !== registerInstrumentFilter) return false;
+                  if (registerStatusFilter === 'checked_in'  && (!checkedIn || checkedOut)) return false;
+                  if (registerStatusFilter === 'absent'      && checkedIn) return false;
+                  if (registerStatusFilter === 'checked_out' && !checkedOut) return false;
+                  return true;
+                })
                 .map((member) => {
                 const record = recordByMemberId.get(member.id);
                 const checkedIn  = !!record;
