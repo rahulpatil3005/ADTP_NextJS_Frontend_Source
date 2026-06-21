@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Search, Plus, Filter, X, Download } from 'lucide-react';
@@ -28,7 +28,7 @@ const STATUS_OPTIONS = [
   { value: 'graduated', label: 'Graduated' },
 ];
 
-export default function MembersPage() {
+function MembersPageInner() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -303,5 +303,13 @@ export default function MembersPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function MembersPage() {
+  return (
+    <Suspense>
+      <MembersPageInner />
+    </Suspense>
   );
 }
