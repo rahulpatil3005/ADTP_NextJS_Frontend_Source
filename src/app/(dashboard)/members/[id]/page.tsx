@@ -134,140 +134,99 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
     }
   };
 
-  // ── Download card PNG via canvas ────────────────────────────
+  // ── Download card PNG via canvas (matches server-side renderMemberCard exactly)
   const downloadCard = (qrDataUrl: string) => {
     if (!member) return;
 
-    // 2× scale for HD output — all drawing coords stay at 680×1020 logical pixels
-    const W = 680, H = 1020;
-    const R = 32;
-    const SCALE = 2;
+    const W = 680, H = 1020, R = 32, SCALE = 2;
     const canvas = document.createElement('canvas');
     canvas.width = W * SCALE; canvas.height = H * SCALE;
     const ctx = canvas.getContext('2d')!;
     ctx.scale(SCALE, SCALE);
 
-    // ── Rounded card background ──────────────────────────────
+    // ── White card background ─────────────────────────────────
     ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath();
-    ctx.roundRect(0, 0, W, H, R);
-    ctx.fill();
+    ctx.beginPath(); ctx.roundRect(0, 0, W, H, R); ctx.fill();
 
-    // ── Crimson header (rounded top) ─────────────────────────
-    const headerH = 180;
+    // ── Compact crimson header ────────────────────────────────
+    const headerH = 112;
     ctx.fillStyle = '#8A0112';
-    ctx.beginPath();
-    ctx.roundRect(0, 0, W, headerH, [R, R, 0, 0]);
-    ctx.fill();
+    ctx.beginPath(); ctx.roundRect(0, 0, W, headerH, [R, R, 0, 0]); ctx.fill();
 
-    // Music icon circle in header
+    // Music icon circle — drawn note shape (matches server-side)
+    const iconCX = 56, iconCY = 56, iconR = 28;
     ctx.fillStyle = 'rgba(255,255,255,0.18)';
-    ctx.beginPath();
-    ctx.arc(56, 56, 28, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 22px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('♪', 56, 63);
+    ctx.beginPath(); ctx.arc(iconCX, iconCY, iconR, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#FFFFFF'; ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.ellipse(iconCX - 4, iconCY + 8, 7, 5, -0.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(iconCX + 3, iconCY + 8); ctx.lineTo(iconCX + 3, iconCY - 10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(iconCX + 3, iconCY - 10);
+    ctx.bezierCurveTo(iconCX + 18, iconCY - 6, iconCX + 16, iconCY + 2, iconCX + 3, iconCY - 2); ctx.stroke();
 
-    // Org name & card title in header
-    ctx.fillStyle = 'rgba(255,255,255,0.65)';
-    ctx.font = '600 15px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText('AVISHKAR DHOL TASHA PATHAK', 98, 47);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 22px sans-serif';
-    ctx.fillText('Member Card', 98, 78);
-
-    // Thin accent line at header bottom
-    ctx.fillStyle = 'rgba(255,255,255,0.15)';
-    ctx.fillRect(0, headerH - 4, W, 4);
+    // Org name & card title
+    ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.font = '14px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('AVISHKAR DHOL TASHA PATHAK', 98, 44);
+    ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 22px sans-serif';
+    ctx.fillText('Member Card', 98, 76);
+    ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(0, headerH - 4, W, 4);
 
     // ── Avatar circle ─────────────────────────────────────────
-    const avatarY = headerH + 64;
+    const avatarR = 52;
+    const avatarY = headerH + 80;
     ctx.fillStyle = '#FDEEF0';
-    ctx.beginPath();
-    ctx.arc(W / 2, avatarY, 52, 0, Math.PI * 2);
-    ctx.fill();
-    // Thin ring
-    ctx.strokeStyle = '#F5C2C7';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    ctx.fillStyle = '#8A0112';
-    ctx.font = 'bold 34px sans-serif';
-    ctx.textAlign = 'center';
+    ctx.beginPath(); ctx.arc(W / 2, avatarY, avatarR, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#F5C2C7'; ctx.lineWidth = 2; ctx.stroke();
     const initials = member.full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+    ctx.fillStyle = '#8A0112'; ctx.font = 'bold 34px sans-serif'; ctx.textAlign = 'center';
     ctx.fillText(initials, W / 2, avatarY + 12);
 
     // ── Member name ───────────────────────────────────────────
-    ctx.fillStyle = '#1A1A2E';
-    ctx.font = 'bold 30px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(member.full_name, W / 2, avatarY + 76);
+    const nameY = avatarY + avatarR + 36;
+    ctx.fillStyle = '#1A1A2E'; ctx.font = 'bold 30px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(member.full_name, W / 2, nameY);
 
     // ── Instrument badge ──────────────────────────────────────
     const badge = (member.instrument ?? '').charAt(0).toUpperCase() + (member.instrument ?? '').slice(1);
-    ctx.font = '600 15px sans-serif';
-    const bW = ctx.measureText(badge).width + 36;
-    const bY = avatarY + 94;
+    ctx.font = 'bold 15px sans-serif';
+    const bW = ctx.measureText(badge).width + 40; const bH = 32; const bY = nameY + 20;
     ctx.fillStyle = '#FDEEF0';
-    ctx.beginPath();
-    ctx.roundRect(W / 2 - bW / 2, bY, bW, 30, 15);
-    ctx.fill();
-    ctx.fillStyle = '#8A0112';
-    ctx.fillText(badge, W / 2, bY + 20);
+    ctx.beginPath(); ctx.roundRect(W / 2 - bW / 2, bY, bW, bH, 16); ctx.fill();
+    ctx.fillStyle = '#8A0112'; ctx.fillText(badge, W / 2, bY + 22);
 
     // ── Divider ───────────────────────────────────────────────
-    const divY = bY + 52;
-    ctx.strokeStyle = '#E0DFD8';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(60, divY); ctx.lineTo(W - 60, divY);
-    ctx.stroke();
+    const divY = bY + bH + 36;
+    ctx.strokeStyle = '#E0DFD8'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(60, divY); ctx.lineTo(W - 60, divY); ctx.stroke();
 
     // ── QR code ───────────────────────────────────────────────
     const qrImg = new Image();
     qrImg.onload = () => {
-      const qrSize = 380;
+      const qrSize = 360;
       const qrX = (W - qrSize) / 2;
-      const qrY = divY + 24;
+      const qrY = divY + 36;
 
-      // QR container box
-      ctx.fillStyle = '#FAFAF7';
-      ctx.strokeStyle = '#E0DFD8';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.roundRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40, 16);
-      ctx.fill();
-      ctx.stroke();
-
+      ctx.fillStyle = '#FAFAF7'; ctx.strokeStyle = '#E0DFD8'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.roundRect(qrX - 24, qrY - 24, qrSize + 48, qrSize + 48, 20);
+      ctx.fill(); ctx.stroke();
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
       // ── Member ID pill ─────────────────────────────────────
-      const idY = qrY + qrSize + 36;
+      const idY = qrY + qrSize + 40;
       ctx.fillStyle = '#FDEEF0';
-      ctx.beginPath();
-      ctx.roundRect(W / 2 - 130, idY, 260, 44, 10);
-      ctx.fill();
-      ctx.fillStyle = '#8A0112';
-      ctx.font = 'bold 19px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(member.member_id, W / 2, idY + 28);
+      ctx.beginPath(); ctx.roundRect(W / 2 - 140, idY, 280, 46, 12); ctx.fill();
+      ctx.fillStyle = '#8A0112'; ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(member.member_id, W / 2, idY + 30);
 
-      // ── Scan instruction ───────────────────────────────────
-      ctx.fillStyle = '#888888';
-      ctx.font = '14px sans-serif';
-      ctx.fillText('Scan this QR code to mark attendance', W / 2, idY + 74);
-      ctx.fillText('Keep this card safe', W / 2, idY + 94);
+      // ── Scan instructions ──────────────────────────────────
+      ctx.fillStyle = '#888888'; ctx.font = '14px sans-serif';
+      ctx.fillText('Scan this QR code to mark attendance', W / 2, idY + 72);
+      ctx.fillText('Keep this card safe', W / 2, idY + 93);
 
-      // ── Footer stripe (rounded bottom) ─────────────────────
+      // ── Footer ─────────────────────────────────────────────
       ctx.fillStyle = '#8A0112';
-      ctx.beginPath();
-      ctx.roundRect(0, H - 52, W, 52, [0, 0, R, R]);
-      ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.beginPath(); ctx.roundRect(0, H - 54, W, 54, [0, 0, R, R]); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.font = '14px sans-serif';
       ctx.font = '13px sans-serif';
       ctx.fillText('avishkardhtp.org', W / 2, H - 20);
 
@@ -278,7 +237,12 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
       ctx.roundRect(1, 1, W - 2, H - 2, R);
       ctx.stroke();
 
-      // ── Download ───────────────────────────────────────────
+      ctx.fillText('avishkardhtp.org', W / 2, H - 20);
+
+      // ── Outer border ───────────────────────────────────────
+      ctx.strokeStyle = '#E0DFD8'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.roundRect(1, 1, W - 2, H - 2, R); ctx.stroke();
+
       const a = document.createElement('a');
       a.href = canvas.toDataURL('image/png', 1.0);
       a.download = `member-card-${member.member_id}.png`;
