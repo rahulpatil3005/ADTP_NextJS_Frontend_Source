@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge, Skeleton } from '@/components/ui/primitives';
 import { useMember, useDeactivateMember, useUpdateMember } from '@/lib/hooks/use-members';
 import { useAuthStore } from '@/store/auth-store';
-import { apiClient, getServerBaseUrl } from '@/lib/api/client';
+import { apiClient } from '@/lib/api/client';
 import { formatDate, instrumentLabel } from '@/lib/utils';
 
 const STATUS_OPTIONS = [
@@ -302,7 +302,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
               <div className="relative shrink-0">
                 {member.photo_url ? (
                   <img
-                    src={`${getServerBaseUrl()}${member.photo_url}`}
+                    src={member.photo_url}
                     alt={member.full_name}
                     className="h-16 w-16 rounded-full object-cover ring-2 ring-primary-accent"
                   />
