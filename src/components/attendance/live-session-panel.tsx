@@ -369,42 +369,55 @@ export function LiveSessionPanel({
           </Card>
 
           {/* ── Clock-In: Manual Entry list ───────────────────── */}
-          <Card className="md:col-span-2 xl:col-span-1">
-            <div className="flex items-center justify-between border-b border-border p-4">
-              <h3 className="text-sm font-medium text-ink">Manual Clock In</h3>
-              <button
-                className="flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
-                onClick={() => setManualOpen(true)}
-              >
-                <ClipboardList className="h-3.5 w-3.5" /> Advanced
-              </button>
-            </div>
-            <div className="max-h-[232px] divide-y divide-border overflow-y-auto">
-              {isLoading && Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="p-3"><Skeleton className="h-6 w-full" /></div>
-              ))}
-              {records?.length === 0 && (
-                <div className="flex flex-col items-center gap-2 py-10 text-center">
-                  <UserCheck className="h-8 w-8 text-ink-secondary/50" />
-                  <p className="text-sm text-ink-secondary">No check-ins yet.</p>
+          {(() => {
+            const notCheckedIn = allMembers.filter((m) => !recordByMemberId.has(m.id));
+            return (
+            <Card className="md:col-span-2 xl:col-span-1">
+              <div className="flex items-center justify-between border-b border-border p-4">
+                <div>
+                  <h3 className="text-sm font-medium text-ink">Manual Clock In</h3>
+                  <p className="text-xs text-ink-secondary mt-0.5">{notCheckedIn.length} not yet checked in</p>
                 </div>
-              )}
-              {records?.map((record) => (
-                <div key={record.id} className="flex items-center gap-3 p-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-accent text-xs font-medium text-primary">
-                    {getInitials(record.full_name)}
+                <button
+                  className="flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                  onClick={() => setManualOpen(true)}
+                >
+                  <ClipboardList className="h-3.5 w-3.5" /> Advanced
+                </button>
+              </div>
+              <div className="max-h-[232px] divide-y divide-border overflow-y-auto">
+                {isLoading && Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="p-3"><Skeleton className="h-6 w-full" /></div>
+                ))}
+                {!isLoading && notCheckedIn.length === 0 && (
+                  <div className="flex flex-col items-center gap-2 py-10 text-center">
+                    <CheckCircle2 className="h-8 w-8 text-success/50" />
+                    <p className="text-sm text-ink-secondary">All members checked in!</p>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-ink">{record.full_name}</p>
-                    <p className="text-xs text-ink-secondary">{instrumentLabel[record.instrument]}</p>
+                )}
+                {notCheckedIn.map((member) => (
+                  <div key={member.id} className="flex items-center gap-3 p-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-accent text-xs font-medium text-primary">
+                      {getInitials(member.full_name)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-ink">{member.full_name}</p>
+                      <p className="text-xs text-ink-secondary">{instrumentLabel[member.instrument] ?? member.instrument}</p>
+                    </div>
+                    <button
+                      onClick={() => handleCheckIn(member.id)}
+                      disabled={checkingIn === member.id}
+                      className="flex items-center gap-1 rounded-lg bg-success/10 px-2.5 py-1.5 text-xs font-semibold text-success hover:bg-success/20 disabled:opacity-40 transition-colors shrink-0"
+                    >
+                      <UserCheck className="h-3.5 w-3.5" />
+                      {checkingIn === member.id ? '…' : 'Check In'}
+                    </button>
                   </div>
-                  <Badge variant={record.attendance_status === 'present' ? 'success' : record.attendance_status === 'late' ? 'warning' : 'info'}>
-                    {record.attendance_status}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </Card>
+                ))}
+              </div>
+            </Card>
+            );
+          })()}
 
           </>) : (<>
           {/* ── Clock-Out: QR Scanner panel ──────────────────── */}
