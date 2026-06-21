@@ -512,6 +512,23 @@ export function LiveSessionPanel({
           </>)}
 
           {/* ── Attendance Register ───────────────────────────── */}
+          {(() => {
+          const filteredRegisterMembers = allMembers.filter((m) => {
+            const rec = recordByMemberId.get(m.id);
+            const ci = !!rec;
+            const co = !!rec?.check_out_time;
+            if (registerSearch) {
+              const q = registerSearch.toLowerCase();
+              if (!m.full_name.toLowerCase().includes(q) && !m.member_id?.toLowerCase().includes(q)) return false;
+            }
+            if (registerInstrumentFilter && m.instrument !== registerInstrumentFilter) return false;
+            if (registerStatusFilter === 'checked_in'  && (!ci || co)) return false;
+            if (registerStatusFilter === 'absent'      && ci)           return false;
+            if (registerStatusFilter === 'checked_out' && !co)          return false;
+            return true;
+          });
+          const isFiltered = !!(registerSearch || registerInstrumentFilter || registerStatusFilter !== 'all');
+          return (
           <Card className="md:col-span-2 xl:col-span-3">
             <div className="border-b border-border">
               <div className="flex items-center justify-between p-3 sm:p-4">
@@ -520,6 +537,11 @@ export function LiveSessionPanel({
                   <span className="ml-2 text-xs font-normal text-ink-secondary">
                     {records?.length ?? 0} / {allMembers.length} checked in
                   </span>
+                  {isFiltered && (
+                    <span className="ml-2 text-xs font-normal text-violet-600">
+                      · {filteredRegisterMembers.length} shown
+                    </span>
+                  )}
                 </h3>
                 <button
                   onClick={handleExport}
@@ -650,23 +672,7 @@ export function LiveSessionPanel({
                 <div key={i} className="px-4 py-3"><Skeleton className="h-8 w-full rounded" /></div>
               ))}
 
-              {!isLoading && allMembers
-                .filter((m) => {
-                  const record = recordByMemberId.get(m.id);
-                  const checkedIn  = !!record;
-                  const checkedOut = !!record?.check_out_time;
-
-                  if (registerSearch) {
-                    const q = registerSearch.toLowerCase();
-                    if (!m.full_name.toLowerCase().includes(q) && !m.member_id?.toLowerCase().includes(q)) return false;
-                  }
-                  if (registerInstrumentFilter && m.instrument !== registerInstrumentFilter) return false;
-                  if (registerStatusFilter === 'checked_in'  && (!checkedIn || checkedOut)) return false;
-                  if (registerStatusFilter === 'absent'      && checkedIn) return false;
-                  if (registerStatusFilter === 'checked_out' && !checkedOut) return false;
-                  return true;
-                })
-                .map((member) => {
+              {!isLoading && filteredRegisterMembers.map((member) => {
                 const record = recordByMemberId.get(member.id);
                 const checkedIn  = !!record;
                 const checkedOut = !!record?.check_out_time;
@@ -797,8 +803,18 @@ export function LiveSessionPanel({
                   <p className="text-sm text-ink-secondary">No active members found.</p>
                 </div>
               )}
+              {!isLoading && allMembers.length > 0 && filteredRegisterMembers.length === 0 && (
+                <div className="flex flex-col items-center gap-2 py-12 text-center">
+                  <Search className="h-8 w-8 text-ink-secondary/30" />
+                  <p className="text-sm text-ink-secondary">No members match your filters.</p>
+                  <button onClick={() => { setRegisterSearch(''); setRegisterStatusFilter('all'); setRegisterInstrumentFilter(''); }} className="text-xs text-violet-600 hover:underline">
+                    Clear filters
+                  </button>
+                </div>
+              )}
             </div>
           </Card>
+          );})()}
         </div>
       </div>
     </div>
