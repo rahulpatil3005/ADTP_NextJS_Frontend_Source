@@ -302,7 +302,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
               <div className="relative shrink-0">
                 {member.photo_url ? (
                   <img
-                    src={`${process.env.NEXT_PUBLIC_API_URL}${member.photo_url}`}
+                    src={`${(process.env.NEXT_PUBLIC_API_URL ?? '').replace('/api/v1', '')}${member.photo_url}`}
                     alt={member.full_name}
                     className="h-16 w-16 rounded-full object-cover ring-2 ring-primary-accent"
                   />
