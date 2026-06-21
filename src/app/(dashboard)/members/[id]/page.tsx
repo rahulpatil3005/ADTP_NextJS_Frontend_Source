@@ -1,8 +1,8 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Download, QrCode, Trash2, X, Music2, AlertTriangle, UserCog, Pencil } from 'lucide-react';
+import { ArrowLeft, Download, QrCode, Trash2, X, Music2, AlertTriangle, UserCog, Pencil, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import { Topbar } from '@/components/layout/topbar';
 import { Button } from '@/components/ui/button';
@@ -49,6 +49,28 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState<Record<string, string>>({});
   const [editLoading, setEditLoading] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('photo', file);
+      await apiClient.post(`/members/${id}/photo`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      toast.success('Photo uploaded successfully.');
+      window.location.reload();
+    } catch {
+      toast.error('Photo upload failed. Please try again.');
+    } finally {
+      setPhotoUploading(false);
+      e.target.value = '';
+    }
+  };
 
   const openEdit = () => {
     if (!member) return;
@@ -299,7 +321,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
           <div className="space-y-5">
             {/* Header card */}
             <div className="flex flex-wrap items-center gap-4 rounded-lg border border-border bg-surface p-5">
-              <div className="relative shrink-0">
+              <div className="relative shrink-0 group">
                 {member.photo_url?.startsWith('data:') ? (
                   <img
                     src={member.photo_url}
@@ -310,6 +332,21 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-accent text-xl font-bold text-primary">
                     {member.full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
                   </div>
+                )}
+                {(role === 'super_admin' || role === 'admin') && (
+                  <>
+                    <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+                    <button
+                      onClick={() => photoInputRef.current?.click()}
+                      disabled={photoUploading}
+                      title="Upload photo"
+                      className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity disabled:cursor-wait"
+                    >
+                      {photoUploading
+                        ? <span className="text-[10px] text-white font-medium">...</span>
+                        : <Camera className="h-5 w-5 text-white" />}
+                    </button>
+                  </>
                 )}
               </div>
               <div className="flex-1">
