@@ -39,8 +39,8 @@ export const createMemberSchema = z.object({
   hasPriorPathakExp: z.boolean().default(false),
   priorPathakName: z.string().max(255).optional(),
 
-  // Instrument (4 options)
-  instrument: z.enum(['dhol', 'tasha', 'tool', 'dhwaj'], {
+  // Instrument
+  instrument: z.enum(['dhol', 'tasha', 'tool', 'dhwaj', 'zanj', 'support'], {
     required_error: 'Please select an instrument',
   }),
 

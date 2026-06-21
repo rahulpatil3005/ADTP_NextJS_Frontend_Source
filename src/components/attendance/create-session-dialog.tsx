@@ -69,7 +69,7 @@ export function CreateSessionDialog({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-surface p-6 shadow-card">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-surface p-4 sm:p-6 shadow-card">
           <div className="mb-4 flex items-center justify-between">
             <Dialog.Title className="text-base font-semibold text-ink">New Session</Dialog.Title>
             <Dialog.Close className="text-ink-secondary hover:text-ink">
@@ -84,7 +84,7 @@ export function CreateSessionDialog({
               {errors.title && <p className="mt-1 text-xs text-danger">{errors.title.message}</p>}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <Label className="mb-1.5 block">Type</Label>
                 <select {...register('sessionType')} className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm">
@@ -101,7 +101,7 @@ export function CreateSessionDialog({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <Label className="mb-1.5 block">Start Time</Label>
                 <Input type="time" {...register('startTime')} />

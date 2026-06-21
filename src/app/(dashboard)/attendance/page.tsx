@@ -10,6 +10,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { formatDate, formatTime12 } from '@/lib/utils';
 import { CreateSessionDialog } from '@/components/attendance/create-session-dialog';
 import { LiveSessionPanel } from '@/components/attendance/live-session-panel';
+import { Pagination } from '@/components/ui/pagination';
 
 const PAGE_SIZE = 10;
 
@@ -53,12 +54,12 @@ export default function AttendancePage() {
     <div>
       <Topbar title="Attendance Sessions" />
 
-      <div className="p-6">
-        <div className="mb-5 flex items-center justify-between">
+      <div className="p-4 sm:p-6">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-ink-secondary">
             Open a session to start scanning or manually mark attendance.
           </p>
-          <Button size="sm" onClick={() => setDialogOpen(true)}>
+          <Button size="sm" className="self-start sm:self-auto shrink-0" onClick={() => setDialogOpen(true)}>
             <Plus className="h-4 w-4" /> New Session
           </Button>
         </div>
@@ -126,16 +127,15 @@ export default function AttendancePage() {
         )}
 
         {totalPages > 1 && (
-          <div className="mt-5 flex items-center justify-between text-sm text-ink-secondary">
-            <span>Page {page} of {totalPages} · {sessions?.length} sessions</span>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                Previous
-              </Button>
-              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
-                Next
-              </Button>
-            </div>
+          <div className="mt-5 flex items-center justify-between gap-4">
+            <span className="text-xs text-ink-secondary">
+              Page {page} of {totalPages} · {sessions?.length} sessions
+            </span>
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
           </div>
         )}
       </div>

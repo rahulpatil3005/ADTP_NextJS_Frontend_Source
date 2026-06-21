@@ -11,12 +11,15 @@ import { useMembers } from '@/lib/hooks/use-members';
 import { getInitials, instrumentLabel, statusBadgeColor, formatDate } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 import { apiClient } from '@/lib/api/client';
+import { Pagination } from '@/components/ui/pagination';
 
 const INSTRUMENT_OPTIONS = [
-  { value: 'dhol',  label: 'ढोल (Dhol)' },
-  { value: 'tasha', label: 'ताशा (Tasha)' },
-  { value: 'tool',  label: 'टोल (Tool)' },
-  { value: 'dhwaj', label: 'ध्वज (Dhwaj)' },
+  { value: 'dhol',    label: 'ढोल (Dhol)' },
+  { value: 'tasha',   label: 'ताशा (Tasha)' },
+  { value: 'tool',    label: 'टोल (Tool)' },
+  { value: 'dhwaj',   label: 'ध्वज (Dhwaj)' },
+  { value: 'zanj',    label: 'झांज (Zanj)' },
+  { value: 'support', label: 'सहाय्यक (Support)' },
 ];
 
 const STATUS_OPTIONS = [
@@ -86,9 +89,9 @@ function MembersPageInner() {
     <div>
       <Topbar title="Members" />
 
-      <div className="p-6">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <div className="relative w-80">
+      <div className="p-4 sm:p-6">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <div className="relative w-full sm:w-80">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-secondary" />
             <Input
               placeholder="Search by name, ID, or mobile…"
@@ -97,7 +100,7 @@ function MembersPageInner() {
               onChange={(e) => setParam({ q: e.target.value })}
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -215,10 +218,10 @@ function MembersPageInner() {
             <thead>
               <tr className="border-b border-border bg-background">
                 <th className="px-4 py-3 text-left font-medium text-ink-secondary">Member</th>
-                <th className="px-4 py-3 text-left font-medium text-ink-secondary">Member ID</th>
-                <th className="px-4 py-3 text-left font-medium text-ink-secondary">Instrument</th>
-                <th className="px-4 py-3 text-left font-medium text-ink-secondary">Mobile</th>
-                <th className="px-4 py-3 text-left font-medium text-ink-secondary">Joined</th>
+                <th className="hidden sm:table-cell px-4 py-3 text-left font-medium text-ink-secondary">Member ID</th>
+                <th className="hidden md:table-cell px-4 py-3 text-left font-medium text-ink-secondary">Instrument</th>
+                <th className="hidden md:table-cell px-4 py-3 text-left font-medium text-ink-secondary">Mobile</th>
+                <th className="hidden lg:table-cell px-4 py-3 text-left font-medium text-ink-secondary">Joined</th>
                 <th className="px-4 py-3 text-left font-medium text-ink-secondary">Status</th>
               </tr>
             </thead>
@@ -232,10 +235,10 @@ function MembersPageInner() {
                         <Skeleton className="h-4 w-28 rounded" />
                       </div>
                     </td>
-                    <td className="px-4 py-3"><Skeleton className="h-4 w-20 rounded" /></td>
-                    <td className="px-4 py-3"><Skeleton className="h-4 w-16 rounded" /></td>
-                    <td className="px-4 py-3"><Skeleton className="h-4 w-24 rounded" /></td>
-                    <td className="px-4 py-3"><Skeleton className="h-4 w-20 rounded" /></td>
+                    <td className="hidden sm:table-cell px-4 py-3"><Skeleton className="h-4 w-20 rounded" /></td>
+                    <td className="hidden md:table-cell px-4 py-3"><Skeleton className="h-4 w-16 rounded" /></td>
+                    <td className="hidden md:table-cell px-4 py-3"><Skeleton className="h-4 w-24 rounded" /></td>
+                    <td className="hidden lg:table-cell px-4 py-3"><Skeleton className="h-4 w-20 rounded" /></td>
                     <td className="px-4 py-3"><Skeleton className="h-5 w-16 rounded-full" /></td>
                   </tr>
                 ))}
@@ -252,10 +255,10 @@ function MembersPageInner() {
                         <span className="font-medium text-ink">{member.full_name}</span>
                       </Link>
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-ink-secondary">{member.member_id}</td>
-                    <td className="px-4 py-3 text-ink-secondary">{instrumentLabel[member.instrument] ?? member.instrument}</td>
-                    <td className="px-4 py-3 text-ink-secondary">{member.mobile_number}</td>
-                    <td className="px-4 py-3 text-ink-secondary">
+                    <td className="hidden sm:table-cell px-4 py-3 font-mono text-xs text-ink-secondary">{member.member_id}</td>
+                    <td className="hidden md:table-cell px-4 py-3 text-ink-secondary">{instrumentLabel[member.instrument] ?? member.instrument}</td>
+                    <td className="hidden md:table-cell px-4 py-3 text-ink-secondary">{member.mobile_number}</td>
+                    <td className="hidden lg:table-cell px-4 py-3 text-ink-secondary">
                       {member.joining_date ? formatDate(member.joining_date) : '—'}
                     </td>
                     <td className="px-4 py-3">
@@ -269,7 +272,7 @@ function MembersPageInner() {
 
               {data?.data.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-ink-secondary">
+                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-ink-secondary">
                     No members found matching your search.
                   </td>
                 </tr>
@@ -279,26 +282,15 @@ function MembersPageInner() {
         </div>
 
         {data && data.totalPages > 1 && (
-          <div className="mt-4 flex items-center justify-between text-sm text-ink-secondary">
-            <span>
+          <div className="mt-4 flex items-center justify-between gap-4">
+            <span className="text-xs text-ink-secondary">
               Page {data.page} of {data.totalPages} · {data.total} members
             </span>
-            <div className="flex gap-2">
-              <Button
-                variant="outline" size="sm"
-                disabled={page <= 1}
-                onClick={() => setParam({ page: String(page - 1) })}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline" size="sm"
-                disabled={page >= data.totalPages}
-                onClick={() => setParam({ page: String(page + 1) })}
-              >
-                Next
-              </Button>
-            </div>
+            <Pagination
+              page={page}
+              totalPages={data.totalPages}
+              onPageChange={(p) => setParam({ page: String(p) })}
+            />
           </div>
         )}
       </div>

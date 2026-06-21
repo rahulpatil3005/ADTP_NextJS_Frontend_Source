@@ -13,16 +13,17 @@ export function RecentRegistrations({ members }: { members: Member[] }) {
       <CardHeader>
         <CardTitle>Recent Registrations</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-1">
+      <CardContent className="p-0">
         {members.length === 0 && (
           <p className="py-6 text-center text-sm text-ink-secondary">No registrations yet</p>
         )}
+        <div className="max-h-[232px] overflow-y-auto divide-y divide-border">
         {members.map((member, i) => {
           const status = statusBadgeColor[member.status] ?? statusBadgeColor.pending;
           return (
             <div
               key={member.id}
-              className="flex items-center gap-3 border-b border-border py-2.5 last:border-0"
+              className="flex items-center gap-3 px-4 py-3"
             >
               <div
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[13px] font-medium ${avatarPalette[i % avatarPalette.length]}`}
@@ -42,6 +43,7 @@ export function RecentRegistrations({ members }: { members: Member[] }) {
             </div>
           );
         })}
+        </div>
       </CardContent>
     </Card>
   );

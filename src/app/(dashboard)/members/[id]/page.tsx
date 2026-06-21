@@ -50,7 +50,9 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
   const [editForm, setEditForm] = useState<Record<string, string>>({});
   const [editLoading, setEditLoading] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [showPhotoMenu, setShowPhotoMenu] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const photoCaptureRef = useRef<HTMLInputElement>(null);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -267,7 +269,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
   return (
     <div>
       <Topbar title="Member Profile" />
-      <div className="mx-auto max-w-3xl p-6">
+      <div className="mx-auto max-w-3xl p-4 sm:p-6">
         <button
           onClick={() => router.back()}
           className="mb-5 flex items-center gap-2 text-sm text-ink-secondary hover:text-ink"
@@ -299,9 +301,12 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                 )}
                 {(role === 'super_admin' || role === 'admin') && (
                   <>
+                    {/* Gallery picker */}
                     <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+                    {/* Camera capture (Android shows camera directly) */}
+                    <input ref={photoCaptureRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoUpload} aria-hidden="true" />
                     <button
-                      onClick={() => photoInputRef.current?.click()}
+                      onClick={() => setShowPhotoMenu(true)}
                       disabled={photoUploading}
                       title="Upload photo"
                       className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity disabled:cursor-wait"
@@ -327,9 +332,14 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                   <QrCode className="h-4 w-4" /> View QR
                 </Button>
                 {(role === 'super_admin' || role === 'admin') && (
-                  <Button size="sm" variant="outline" onClick={openEdit}>
-                    <Pencil className="h-4 w-4" /> Edit Member
-                  </Button>
+                  <>
+                    <Button size="sm" variant="outline" onClick={openEdit}>
+                      <Pencil className="h-4 w-4" /> Edit Member
+                    </Button>
+                    <Button size="sm" variant="outline" loading={photoUploading} onClick={() => setShowPhotoMenu(true)}>
+                      <Camera className="h-4 w-4" /> Update Photo
+                    </Button>
+                  </>
                 )}
                 {role === 'super_admin' && (
                   <Button size="sm" variant="outline" onClick={() => { setSelectedStatus(member.status as MemberStatus); setShowStatusModal(true); }}>
@@ -437,6 +447,47 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
         )}
       </div>
 
+      {/* ── Photo Source Menu ───────────────────────────────── */}
+      {showPhotoMenu && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50" onClick={() => setShowPhotoMenu(false)}>
+          <div
+            className="w-full max-w-sm rounded-t-2xl bg-surface pb-safe shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-5 py-4 text-center">
+              <p className="text-sm font-semibold text-ink">Update Profile Photo</p>
+              <p className="mt-0.5 text-xs text-ink-secondary">Choose how to add a photo</p>
+            </div>
+            <div className="divide-y divide-border border-t border-border">
+              <button
+                className="flex w-full items-center gap-3 px-5 py-4 text-left text-sm font-medium text-ink hover:bg-background active:bg-background"
+                onClick={() => { setShowPhotoMenu(false); photoCaptureRef.current?.click(); }}
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-accent">
+                  <Camera className="h-5 w-5 text-primary" />
+                </span>
+                Take Photo
+              </button>
+              <button
+                className="flex w-full items-center gap-3 px-5 py-4 text-left text-sm font-medium text-ink hover:bg-background active:bg-background"
+                onClick={() => { setShowPhotoMenu(false); photoInputRef.current?.click(); }}
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-accent">
+                  <svg className="h-5 w-5 text-primary" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                </span>
+                Choose from Gallery
+              </button>
+            </div>
+            <button
+              className="w-full py-4 text-center text-sm font-semibold text-danger border-t border-border"
+              onClick={() => setShowPhotoMenu(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Edit Member Modal ────────────────────────────────── */}
       {showEditModal && member && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4">
@@ -518,6 +569,8 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                       <option value="tasha">ताशा (Tasha)</option>
                       <option value="tool">टोल (Tool)</option>
                       <option value="dhwaj">ध्वज (Dhwaj)</option>
+                      <option value="zanj">झांज (Zanj)</option>
+                      <option value="support">सहाय्यक (Support)</option>
                     </select>
                   </div>
                   <div>

@@ -153,9 +153,10 @@ function AdminDashboard() {
 }
 
 function DashboardSkeleton({ cols = 5 }: { cols?: number }) {
+  const gridClass = cols === 3 ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 lg:grid-cols-5';
   return (
     <div>
-      <div className={`mb-6 grid grid-cols-2 gap-4 lg:grid-cols-${cols}`}>
+      <div className={`mb-6 grid gap-4 ${gridClass}`}>
         {Array.from({ length: cols }).map((_, i) => (
           <Skeleton key={i} className="h-[110px] rounded-lg" />
         ))}

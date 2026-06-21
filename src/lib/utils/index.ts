@@ -33,7 +33,8 @@ export function getInitials(name: string) {
 }
 
 export const instrumentLabel: Record<string, string> = {
-  dhol: 'Dhol', tasha: 'Tasha', tool: 'Tool', dhwaj: 'Dhwaj', dholki: 'Dholki', other: 'Other',
+  dhol: 'Dhol', tasha: 'Tasha', tool: 'Tool', dhwaj: 'Dhwaj', dholki: 'Dholki',
+  zanj: 'झांज (Zanj)', support: 'सहाय्यक (Support)', other: 'Other',
 };
 
 export const statusBadgeColor: Record<string, { bg: string; text: string }> = {

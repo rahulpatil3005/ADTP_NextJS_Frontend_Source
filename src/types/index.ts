@@ -22,7 +22,7 @@ export type Gender = 'male' | 'female' | 'other';
 export type CurrentStatus =
   | 'school_student' | 'college_student'
   | 'working_professional' | 'business' | 'other';
-export type Instrument = 'dhol' | 'tasha' | 'tool' | 'dholki' | 'other';
+export type Instrument = 'dhol' | 'tasha' | 'tool' | 'dhwaj' | 'dholki' | 'zanj' | 'support' | 'other';
 export type Availability = 'daily' | 'two_days_week' | 'three_days_week' | 'weekly' | 'bi_weekly' | 'monthly' | 'other';
 export type MemberStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
@@ -114,6 +114,7 @@ export interface AttendanceRecord {
   attendance_status: AttendanceStatus;
   check_in_time?: string;
   check_in_method?: string;
+  check_out_time?: string;
 }
 
 export interface DailySummary {

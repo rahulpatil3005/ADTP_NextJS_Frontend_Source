@@ -70,7 +70,7 @@ export function ManualEntryDialog({ sessionId, onClose, onSuccess }: Props) {
       <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl flex flex-col max-h-[90vh]">
 
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 sm:px-6">
           <div className="flex items-center gap-2">
             <UserCheck className="h-5 w-5 text-primary" />
             <h2 className="text-base font-semibold text-gray-900">Manual Attendance Entry</h2>
@@ -80,7 +80,7 @@ export function ManualEntryDialog({ sessionId, onClose, onSuccess }: Props) {
           </button>
         </div>
 
-        <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
+        <div className="overflow-y-auto flex-1 px-4 py-4 sm:px-6 space-y-4">
 
           {/* Step 1: Search member */}
           <div>
@@ -189,7 +189,7 @@ export function ManualEntryDialog({ sessionId, onClose, onSuccess }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-100 px-6 py-4 flex gap-3">
+        <div className="border-t border-gray-100 px-4 py-4 sm:px-6 flex gap-3">
           <Button variant="outline" className="flex-1" onClick={onClose}>
             Cancel
           </Button>

@@ -21,10 +21,12 @@ interface QrResult {
 }
 
 const INSTRUMENTS = [
-  { value: 'dhol', marathi: 'ढोल', english: 'Dhol' },
-  { value: 'tasha', marathi: 'ताशा', english: 'Tasha' },
-  { value: 'tool', marathi: 'टोल', english: 'Tool' },
-  { value: 'dhwaj', marathi: 'ध्वज', english: 'Dhwaj' },
+  { value: 'dhol',    marathi: 'ढोल',      english: 'Dhol' },
+  { value: 'tasha',   marathi: 'ताशा',     english: 'Tasha' },
+  { value: 'tool',    marathi: 'टोल',      english: 'Tool' },
+  { value: 'dhwaj',   marathi: 'ध्वज',     english: 'Dhwaj' },
+  { value: 'zanj',    marathi: 'झांज',     english: 'Zanj' },
+  { value: 'support', marathi: 'सहाय्यक', english: 'Support' },
 ] as const;
 
 const AVAILABILITY = [
