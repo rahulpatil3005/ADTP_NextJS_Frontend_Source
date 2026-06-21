@@ -23,7 +23,7 @@ export type CurrentStatus =
   | 'school_student' | 'college_student'
   | 'working_professional' | 'business' | 'other';
 export type Instrument = 'dhol' | 'tasha' | 'tool' | 'dholki' | 'other';
-export type Availability = 'weekly' | 'bi_weekly' | 'monthly';
+export type Availability = 'daily' | 'two_days_week' | 'three_days_week' | 'weekly' | 'bi_weekly' | 'monthly' | 'other';
 export type MemberStatus = 'active' | 'inactive' | 'pending' | 'suspended';
 
 export interface Member {
