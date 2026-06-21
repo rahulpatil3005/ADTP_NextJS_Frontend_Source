@@ -41,6 +41,8 @@ export interface Member {
   photo_url?: string;
   current_status?: CurrentStatus;
   current_status_org?: string;
+  parents_name?: string;
+  parents_contact?: string;
   guardian_name?: string;
   guardian_contact?: string;
   has_prior_pathak_exp?: boolean;

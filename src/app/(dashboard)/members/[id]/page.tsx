@@ -84,8 +84,8 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
       currentStatus:  member.current_status ?? '',
       instrument:     member.instrument ?? '',
       availability:   member.availability ?? '',
-      parentsName:    member.guardian_name ?? '',
-      parentsContact: member.guardian_contact ?? '',
+      parentsName:    member.parents_name ?? member.guardian_name ?? '',
+      parentsContact: member.parents_contact ?? member.guardian_contact ?? '',
       joiningReason:  member.joining_reason ?? '',
       healthDetails:  member.health_notes ?? '',
     });
@@ -398,8 +398,8 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
 
             <Section title="Guardian / Parent Information">
               <Grid>
-                <Field label="Guardian Name" value={member.guardian_name ?? '—'} />
-                <Field label="Guardian Contact" value={member.guardian_contact ?? '—'} />
+                <Field label="Parent / Guardian Name" value={member.parents_name ?? member.guardian_name ?? '—'} />
+                <Field label="Parent / Guardian Mobile" value={member.parents_contact ?? member.guardian_contact ?? '—'} />
               </Grid>
             </Section>
 
