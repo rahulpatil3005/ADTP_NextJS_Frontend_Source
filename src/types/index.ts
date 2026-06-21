@@ -40,12 +40,14 @@ export interface Member {
   pan_number?: string;
   photo_url?: string;
   current_status?: CurrentStatus;
+  current_status_org?: string;
   guardian_name?: string;
   guardian_contact?: string;
   has_prior_pathak_exp?: boolean;
   prior_pathak_name?: string;
   instrument: Instrument;
   availability?: Availability;
+  availability_other?: string;
   joining_reason?: string;
   medical_conditions?: string;
   physical_limitations?: string;
