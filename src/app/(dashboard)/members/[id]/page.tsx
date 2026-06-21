@@ -76,7 +76,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
     if (!member) return;
     setEditForm({
       fullName:       member.full_name ?? '',
-      dateOfBirth:    member.date_of_birth ?? '',
+      dateOfBirth:    member.date_of_birth ? member.date_of_birth.split('T')[0] : '',
       gender:         member.gender ?? '',
       mobileNumber:   member.mobile_number ?? '',
       email:          member.email ?? '',
