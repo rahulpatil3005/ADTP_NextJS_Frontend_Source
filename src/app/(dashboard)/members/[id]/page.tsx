@@ -299,8 +299,18 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
           <div className="space-y-5">
             {/* Header card */}
             <div className="flex flex-wrap items-center gap-4 rounded-lg border border-border bg-surface p-5">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-accent text-xl font-bold text-primary">
-                {member.full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+              <div className="relative shrink-0">
+                {member.photo_url ? (
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_API_URL}${member.photo_url}`}
+                    alt={member.full_name}
+                    className="h-16 w-16 rounded-full object-cover ring-2 ring-primary-accent"
+                  />
+                ) : (
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-accent text-xl font-bold text-primary">
+                    {member.full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                  </div>
+                )}
               </div>
               <div className="flex-1">
                 <h2 className="text-lg font-semibold text-ink">{member.full_name}</h2>
@@ -340,11 +350,22 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                 <Field label="Date of Birth" value={member.date_of_birth ? formatDate(member.date_of_birth) : '—'} />
                 <Field label="Gender" value={member.gender ?? '—'} />
                 <Field label="Mobile" value={member.mobile_number} />
+                {member.alternate_mobile && <Field label="Alternate Mobile" value={member.alternate_mobile} />}
                 <Field label="Email" value={member.email ?? '—'} />
-                <Field label="Address" value={member.address ?? '—'} />
                 <Field label="Aadhaar" value={member.aadhaar_number ? '••••••••' + member.aadhaar_number.slice(-4) : '—'} />
                 <Field label="PAN" value={member.pan_number ?? '—'} />
-                <Field label="Current Status" value={member.current_status ?? '—'} />
+              </Grid>
+              <div className="mt-4">
+                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-secondary">Address</p>
+                <p className="text-sm text-ink">{member.address ?? '—'}</p>
+              </div>
+            </Section>
+
+            {/* Current Status */}
+            <Section title="Current Status">
+              <Grid>
+                <Field label="Occupation / Status" value={member.current_status ? member.current_status.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) : '—'} />
+                {member.current_status_org && <Field label="Organisation / School / College" value={member.current_status_org} />}
               </Grid>
             </Section>
 
@@ -352,42 +373,49 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
             <Section title="Pathak Information">
               <Grid>
                 <Field label="Instrument" value={instrumentLabel[member.instrument] ?? member.instrument} />
-                <Field label="Availability" value={member.availability ?? '—'} />
+                <Field
+                  label="Availability"
+                  value={
+                    member.availability === 'other' && member.availability_other
+                      ? member.availability_other
+                      : member.availability
+                        ? member.availability.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+                        : '—'
+                  }
+                />
                 <Field label="Joining Date" value={member.joining_date ? formatDate(member.joining_date) : '—'} />
                 <Field label="Prior Pathak Experience" value={member.has_prior_pathak_exp ? 'Yes' : 'No'} />
                 {member.prior_pathak_name && <Field label="Previous Pathak" value={member.prior_pathak_name} />}
               </Grid>
               {member.joining_reason && (
                 <div className="mt-4">
-                  <p className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-secondary">Joining Reason</p>
+                  <p className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-secondary">Why Joined</p>
                   <p className="text-sm text-ink">{member.joining_reason}</p>
                 </div>
               )}
             </Section>
 
-            {(member.guardian_name || member.guardian_contact) && (
-              <Section title="Guardian Information">
-                <Grid>
-                  <Field label="Guardian Name" value={member.guardian_name ?? '—'} />
-                  <Field label="Guardian Contact" value={member.guardian_contact ?? '—'} />
-                </Grid>
-              </Section>
-            )}
+            <Section title="Guardian / Parent Information">
+              <Grid>
+                <Field label="Guardian Name" value={member.guardian_name ?? '—'} />
+                <Field label="Guardian Contact" value={member.guardian_contact ?? '—'} />
+              </Grid>
+            </Section>
 
-            {(member.medical_conditions || member.physical_limitations || member.health_notes) && (
-              <Section title="Health Information">
-                <Grid>
-                  <Field label="Medical Conditions" value={member.medical_conditions ?? '—'} />
-                  <Field label="Physical Limitations" value={member.physical_limitations ?? '—'} />
-                </Grid>
-                {member.health_notes && (
-                  <div className="mt-4">
-                    <p className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-secondary">Health Notes</p>
-                    <p className="text-sm text-ink">{member.health_notes}</p>
-                  </div>
-                )}
-              </Section>
-            )}
+            <Section title="Health Information">
+              <Grid>
+                {member.medical_conditions && <Field label="Medical Conditions" value={member.medical_conditions} />}
+                {member.physical_limitations && <Field label="Physical Limitations" value={member.physical_limitations} />}
+              </Grid>
+              {member.health_notes ? (
+                <div className={member.medical_conditions || member.physical_limitations ? 'mt-4' : ''}>
+                  <p className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-secondary">Health Details</p>
+                  <p className="text-sm text-ink">{member.health_notes}</p>
+                </div>
+              ) : !member.medical_conditions && !member.physical_limitations ? (
+                <p className="text-sm text-ink-secondary">No health conditions reported.</p>
+              ) : null}
+            </Section>
           </div>
         )}
       </div>
