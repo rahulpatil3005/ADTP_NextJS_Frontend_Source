@@ -353,8 +353,22 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                 <Field label="Mobile" value={member.mobile_number} />
                 {member.alternate_mobile && <Field label="Alternate Mobile" value={member.alternate_mobile} />}
                 <Field label="Email" value={member.email ?? '—'} />
-                <Field label="Aadhaar" value={member.aadhaar_number ? '••••••••' + member.aadhaar_number.slice(-4) : '—'} />
-                <Field label="PAN" value={member.pan_number ?? '—'} />
+                <Field
+                  label="Aadhaar"
+                  value={member.aadhaar_number
+                    ? role === 'super_admin'
+                      ? member.aadhaar_number
+                      : '••••••••' + member.aadhaar_number.slice(-4)
+                    : '—'}
+                />
+                <Field
+                  label="PAN"
+                  value={member.pan_number
+                    ? role === 'super_admin'
+                      ? member.pan_number
+                      : member.pan_number.slice(0, 2) + '•••••' + member.pan_number.slice(-2)
+                    : '—'}
+                />
               </Grid>
               <div className="mt-4">
                 <p className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-secondary">Address</p>
