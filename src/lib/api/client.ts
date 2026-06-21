@@ -65,3 +65,9 @@ export function getErrorMessage(error: unknown): string {
   }
   return 'Something went wrong';
 }
+
+/** Base server URL without /api/v1 — use for static assets like /uploads/photos/... */
+export function getServerBaseUrl(): string {
+  const base = apiClient.defaults.baseURL ?? '';
+  return base.replace(/\/api\/v1\/?$/, '');
+}
