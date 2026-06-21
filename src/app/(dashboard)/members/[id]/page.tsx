@@ -300,7 +300,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
             {/* Header card */}
             <div className="flex flex-wrap items-center gap-4 rounded-lg border border-border bg-surface p-5">
               <div className="relative shrink-0">
-                {member.photo_url ? (
+                {member.photo_url?.startsWith('data:') ? (
                   <img
                     src={member.photo_url}
                     alt={member.full_name}
