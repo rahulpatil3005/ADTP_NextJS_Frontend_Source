@@ -402,12 +402,14 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                 <Field label="Prior Pathak Experience" value={member.has_prior_pathak_exp ? 'Yes' : 'No'} />
                 {member.prior_pathak_name && <Field label="Previous Pathak" value={member.prior_pathak_name} />}
               </Grid>
-              {member.joining_reason && (
-                <div className="mt-4">
-                  <p className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-secondary">Why Joined</p>
-                  <p className="text-sm text-ink">{member.joining_reason}</p>
-                </div>
-              )}
+            </Section>
+
+            {/* About You */}
+            <Section title="About You">
+              <div>
+                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-secondary">Why do you want to join?</p>
+                <p className="text-sm text-ink">{member.joining_reason ?? '—'}</p>
+              </div>
             </Section>
 
             <Section title="Guardian / Parent Information">

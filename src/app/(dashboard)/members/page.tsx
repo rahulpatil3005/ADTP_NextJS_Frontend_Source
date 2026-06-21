@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Search, Plus, Filter, X, Download } from 'lucide-react';
 import { Topbar } from '@/components/layout/topbar';
@@ -28,13 +29,29 @@ const STATUS_OPTIONS = [
 ];
 
 export default function MembersPage() {
-  const [query, setQuery] = useState('');
-  const [instrument, setInstrument] = useState('');
-  const [status, setStatus] = useState('');
-  const [page, setPage] = useState(1);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Read state from URL so back-button restores page/filters
+  const query      = searchParams.get('q') ?? '';
+  const instrument = searchParams.get('instrument') ?? '';
+  const status     = searchParams.get('status') ?? '';
+  const page       = Number(searchParams.get('page') ?? '1');
+
   const [showFilter, setShowFilter] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const role = useAuthStore((s) => s.role);
+
+  const setParam = (updates: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([k, v]) => {
+      if (v) params.set(k, v); else params.delete(k);
+    });
+    // Always reset to page 1 when filters/search change (unless explicitly setting page)
+    if (!('page' in updates)) params.set('page', '1');
+    router.replace(`${pathname}?${params.toString()}`);
+  };
 
   const handleDownloadAllQr = async () => {
     setDownloading(true);
@@ -63,7 +80,7 @@ export default function MembersPage() {
     limit: 10,
   });
 
-  const clearFilters = () => { setInstrument(''); setStatus(''); setPage(1); };
+  const clearFilters = () => setParam({ instrument: '', status: '' });
 
   return (
     <div>
@@ -77,7 +94,7 @@ export default function MembersPage() {
               placeholder="Search by name, ID, or mobile…"
               className="pl-9"
               value={query}
-              onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+              onChange={(e) => setParam({ q: e.target.value })}
             />
           </div>
           <div className="flex gap-2">
@@ -117,7 +134,6 @@ export default function MembersPage() {
         {/* Filter panel */}
         {showFilter && (
           <div className="mb-5 rounded-xl border border-border bg-surface shadow-sm">
-            {/* Panel header */}
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-primary" />
@@ -131,24 +147,19 @@ export default function MembersPage() {
               <button
                 onClick={() => setShowFilter(false)}
                 className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-secondary transition-colors hover:bg-gray-100 hover:text-ink"
-                title="Close filter"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Filter body */}
             <div className="grid grid-cols-1 gap-5 p-4 sm:grid-cols-2">
-              {/* Instrument */}
               <div>
-                <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-ink-secondary">
-                  Instrument
-                </p>
+                <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-ink-secondary">Instrument</p>
                 <div className="flex flex-wrap gap-2">
                   {INSTRUMENT_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
-                      onClick={() => { setInstrument(instrument === opt.value ? '' : opt.value); setPage(1); }}
+                      onClick={() => setParam({ instrument: instrument === opt.value ? '' : opt.value })}
                       className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
                         instrument === opt.value
                           ? 'border-primary bg-primary text-white shadow-sm'
@@ -162,16 +173,13 @@ export default function MembersPage() {
                 </div>
               </div>
 
-              {/* Status */}
               <div>
-                <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-ink-secondary">
-                  Status
-                </p>
+                <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-ink-secondary">Status</p>
                 <div className="flex flex-wrap gap-2">
                   {STATUS_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
-                      onClick={() => { setStatus(status === opt.value ? '' : opt.value); setPage(1); }}
+                      onClick={() => setParam({ status: status === opt.value ? '' : opt.value })}
                       className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
                         status === opt.value
                           ? 'border-primary bg-primary text-white shadow-sm'
@@ -186,7 +194,6 @@ export default function MembersPage() {
               </div>
             </div>
 
-            {/* Panel footer */}
             <div className="flex items-center justify-between border-t border-border px-4 py-3">
               <p className="text-xs text-ink-secondary">
                 {activeFilterCount === 0
@@ -194,22 +201,14 @@ export default function MembersPage() {
                   : `${activeFilterCount} filter${activeFilterCount > 1 ? 's' : ''} applied · ${data?.total ?? '…'} result${(data?.total ?? 0) !== 1 ? 's' : ''}`}
               </p>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={activeFilterCount === 0}
-                  onClick={clearFilters}
-                >
+                <Button variant="outline" size="sm" disabled={activeFilterCount === 0} onClick={clearFilters}>
                   <X className="h-3.5 w-3.5" /> Clear Filters
                 </Button>
-                <Button size="sm" onClick={() => setShowFilter(false)}>
-                  Done
-                </Button>
+                <Button size="sm" onClick={() => setShowFilter(false)}>Done</Button>
               </div>
             </div>
           </div>
         )}
-
 
         <div className="overflow-x-auto rounded-lg border border-border bg-surface">
           <table className="w-full text-sm">
@@ -242,7 +241,7 @@ export default function MembersPage() {
                 ))}
 
               {data?.data.map((member) => {
-                const status = statusBadgeColor[member.status] ?? statusBadgeColor.pending;
+                const st = statusBadgeColor[member.status] ?? statusBadgeColor.pending;
                 return (
                   <tr key={member.id} className="border-b border-border last:border-0 hover:bg-background/60">
                     <td className="px-4 py-3">
@@ -254,7 +253,7 @@ export default function MembersPage() {
                       </Link>
                     </td>
                     <td className="px-4 py-3 font-mono text-xs text-ink-secondary">{member.member_id}</td>
-                    <td className="px-4 py-3 text-ink-secondary">{instrumentLabel[member.instrument]}</td>
+                    <td className="px-4 py-3 text-ink-secondary">{instrumentLabel[member.instrument] ?? member.instrument}</td>
                     <td className="px-4 py-3 text-ink-secondary">{member.mobile_number}</td>
                     <td className="px-4 py-3 text-ink-secondary">
                       {member.joining_date ? formatDate(member.joining_date) : '—'}
@@ -288,14 +287,14 @@ export default function MembersPage() {
               <Button
                 variant="outline" size="sm"
                 disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
+                onClick={() => setParam({ page: String(page - 1) })}
               >
                 Previous
               </Button>
               <Button
                 variant="outline" size="sm"
                 disabled={page >= data.totalPages}
-                onClick={() => setPage((p) => p + 1)}
+                onClick={() => setParam({ page: String(page + 1) })}
               >
                 Next
               </Button>
